@@ -1,0 +1,17 @@
+{
+    "name": "woowup/woowup-php-client",
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "authors": [
+        {
+            "name": "Diego Rivas",
+            "email": "diego@woowup.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "WoowUp\\": "src/"
+        }
+    }
+}
