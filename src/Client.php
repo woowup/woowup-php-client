@@ -5,8 +5,7 @@ use WoowUp\Endpoints\Purchases;
 use WoowUp\Endpoints\Users;
 
 class Client {
-	//const HOST = 'https://api.woowup.com';
-	const HOST = 'http://admin.woowuplocal.com:8080';
+	const HOST = 'https://api.woowup.com';
 	const VERSION = 'apiv3';
 
 	protected $http;
