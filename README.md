@@ -12,7 +12,7 @@ You can install **woowup-php-client** via composer or by downloading the source.
 
 ## Documentation
 
-The documentation for the Twilio API is located [here](https://docs.woowup.com).
+The documentation for the WoowUp API is located [here](https://docs.woowup.com).
 
 ## Prerequisites
 
