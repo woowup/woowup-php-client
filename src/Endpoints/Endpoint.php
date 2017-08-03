@@ -12,6 +12,10 @@ class Endpoint
 	const HTTP_BAD_REQUEST = 403;
 	const HTTP_NOT_FOUND = 404;
 
+	const MAX_ATTEMPTS = 5;
+
+	protected static $retryResponses = [self::HTTP_TOO_MANY_REQUEST];
+
 	protected $host;
 	protected $apikey;
 	protected $http;
@@ -25,7 +29,7 @@ class Endpoint
 
 	protected function get($url, $params)
 	{
-		return $this->http->request('GET', $url, [
+		return $this->request('GET', $url, [
 			'query' => $params,
 			'headers' => [
 				'Authorization' => 'Basic '.$this->apikey,
@@ -36,7 +40,7 @@ class Endpoint
 
 	protected function post($url, $data)
 	{
-		return $this->http->request('POST', $url, [
+		return $this->request('POST', $url, [
 			'json' => $data,
 			'headers' => [
 				'Authorization' => 'Basic '.$this->apikey,
@@ -47,7 +51,7 @@ class Endpoint
 
 	protected function postForm($url, $params)
 	{
-		return $this->http->request('POST', $url, [
+		return $this->request('POST', $url, [
 			'form_params' => $params,
 			'headers' => [
 				'Authorization' => 'Basic '.$this->apikey,
@@ -58,7 +62,7 @@ class Endpoint
 
 	protected function put($url, $data)
 	{
-		return $this->http->request('PUT', $url, [
+		return $this->request('PUT', $url, [
 			'json' => $data,
 			'headers' => [
 				'Authorization' => 'Basic '.$this->apikey,
@@ -69,12 +73,32 @@ class Endpoint
 
 	protected function delete($url)
 	{
-		return $this->http->request('DELETE', $url, [
+		return $this->request('DELETE', $url, [
 			'headers' => [
 				'Authorization' => 'Basic '.$this->apikey,
 				'Accept' => 'application/json'
 			]
 		]);
+	}
+
+	protected function request($verb, $url, $params)
+	{
+		$attempts = 0;
+		while ($attempts < self::MAX_ATTEMPTS) {
+			try {
+				return $this->http->request($verb, $url, $params);
+			} catch (\GuzzleHttp\Exception\RequestException $e) {
+				if (in_array($e->getResponse()->getStatusCode(), self::$retryResponses) && $attempts <= self::MAX_ATTEMPTS) {
+					// sleep 1, 2, 4, 8, ... seconds
+					sleep(pow(2, $attempts));
+					$attempts++;
+				} else {
+					throw $e;
+				}
+			}
+		}
+
+		throw new \Exception("Max request attempts reached");
 	}
 
 }
