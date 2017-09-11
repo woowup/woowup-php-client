@@ -12,7 +12,7 @@ class Users extends Endpoint
 
 	public function create($user)
 	{
-		$response = $this->postForm($this->host.'/users', $user);
+		$response = $this->post($this->host.'/users', $user);
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 	}
