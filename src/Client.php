@@ -3,6 +3,7 @@ namespace WoowUp;
 
 use WoowUp\Endpoints\Purchases;
 use WoowUp\Endpoints\Users;
+use WoowUp\Endpoints\Products;
 
 class Client
 {
