@@ -13,7 +13,7 @@ class Products extends Endpoint
 
     public function create($product)
     {
-        $response = $this->post($this->host . '/products', $user);
+        $response = $this->post($this->host . '/products', $product);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
