@@ -10,6 +10,13 @@ class Users extends Endpoint
 		parent::__construct($host, $apikey);
 	}
 
+	public function update($serviceUid, $user)
+	{
+		$response = $this->put($this->host.'/users/'.$this->encode($serviceUid), $user);
+
+		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+	}
+
 	public function create($user)
 	{
 		$response = $this->post($this->host.'/users', $user);
