@@ -101,6 +101,11 @@ class Endpoint
 		throw new \Exception("Max request attempts reached");
 	}
 
+	protected function encode($string)
+    {
+        return urlencode(base64_encode($string));
+    }
+
 }
 
 ?>

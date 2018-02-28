@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit bootstrap="tests/bootstrap.php" colors="true">
+    <testsuites>
+        <testsuite name="WoowUp Test Suite">
+            <directory>tests/WoowUp/</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <ini name="date.timezone" value="UTC"/>
+    </php>
+</phpunit>
