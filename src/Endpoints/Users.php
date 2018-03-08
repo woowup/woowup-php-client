@@ -42,9 +42,9 @@ class Users extends Endpoint
 		return urlencode(base64_encode($uid));
 	}
 	
-	public function getUserByUid($serviceUid)
+	public function find($serviceUid)
 	{
-		$response = $this->get($this->host.'/users/'.$this->encode($serviceUid).'/exist', []);
+		$response = $this->get($this->host.'/users/'. $this->encode($serviceUid), []);
 
 		if ($response->getStatusCode() == Endpoint::HTTP_OK) {
 			$data = json_decode($response->getBody());
