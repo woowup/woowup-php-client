@@ -41,6 +41,36 @@ class Users extends Endpoint
 	{
 		return urlencode(base64_encode($uid));
 	}
+	
+	public function getUserByUid($serviceUid)
+	{
+		$response = $this->get($this->host.'/users/'.$this->encode($serviceUid).'/exist', []);
+
+		if ($response->getStatusCode() == Endpoint::HTTP_OK) {
+			$data = json_decode($response->getBody());
+
+			if ( isset($data->payload) && isset($data->payload->exist) && $data->payload->exist ) {
+				return $data->payload;
+			}
+		}
+
+		return null;
+	}
+
+	public function getAll()
+	{
+		$response = $this->get($this->host.'/users', []);
+
+		if ($response->getStatusCode() == Endpoint::HTTP_OK) {
+			$data = json_decode($response->getBody());
+
+			if ( isset($data->payload) && isset($data->payload->exist) && $data->payload->exist ) {
+				return $data->payload;
+			}
+		}
+
+		return null;
+	}
 }
 
 ?>
