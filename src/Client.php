@@ -2,6 +2,7 @@
 namespace WoowUp;
 
 use WoowUp\Endpoints\AbandonedCarts;
+use Woowup\Endpoints\UserEvents;
 use WoowUp\Endpoints\Products;
 use WoowUp\Endpoints\Purchases;
 use WoowUp\Endpoints\Users;
