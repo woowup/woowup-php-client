@@ -105,7 +105,6 @@ class Endpoint
     {
         return urlencode(base64_encode($string));
     }
-
 }
 
 ?>
