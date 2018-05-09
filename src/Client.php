@@ -2,8 +2,10 @@
 namespace WoowUp;
 
 use WoowUp\Endpoints\AbandonedCarts;
+use WoowUp\Endpoints\Events;
 use WoowUp\Endpoints\Products;
 use WoowUp\Endpoints\Purchases;
+use WoowUp\Endpoints\UserEvents;
 use WoowUp\Endpoints\Users;
 
 class Client
@@ -35,6 +37,18 @@ class Client
     public $abadonedCarts;
 
     /**
+     * Events endpoint wrapper
+     * @var WoowUp\Endpoints\Events
+     */
+    public $events;
+
+    /**
+     * UserEvents endpoint wrapper
+     * @var WoowUp\Endpoints\UserEvents
+     */
+    public $userEvents;
+
+    /**
      * Client constructor
      * @param string $apikey Account's apikey
      * @param string $host   WoowUp API host
@@ -48,5 +62,7 @@ class Client
         $this->users          = new Users($url, $apikey);
         $this->products       = new Products($url, $apikey);
         $this->abandonedCarts = new AbandonedCarts($url, $apikey);
+        $this->events         = new Events($url, $apikey);
+        $this->userEvents     = new UserEvents($url, $apikey);
     }
 }
