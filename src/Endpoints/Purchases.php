@@ -23,6 +23,13 @@ class Purchases extends Endpoint
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 	}
+
+	public function update($purchase)
+	{
+		$response = $this->put($this->host.'/purchases', $purchase);
+
+		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+	}
 }
 
 ?>
