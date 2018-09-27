@@ -44,6 +44,21 @@ class Products extends Endpoint
         return false;
     }
 
+    public function search($search = [], $page = 0, $limit = 100)
+    {
+        $params = array_merge($search, ['page' => $page, 'limit' => $limit]);
+
+        $response = $this->get($this->host . '/products', $params);
+
+        if ($response->getStatusCode() == Endpoint::HTTP_OK) {
+            $data = json_decode($response->getBody());
+
+            return isset($data->payload) ? $data->payload : [];
+        }
+
+        return false;
+    }
+
     protected function encode($sku)
     {
         return urlencode(base64_encode($sku));

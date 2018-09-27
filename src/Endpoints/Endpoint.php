@@ -88,7 +88,7 @@ class Endpoint
 			try {
 				return $this->http->request($verb, $url, $params);
 			} catch (\GuzzleHttp\Exception\RequestException $e) {
-				if (in_array($e->getResponse()->getStatusCode(), self::$retryResponses) && $attempts <= self::MAX_ATTEMPTS) {
+				if ($e->hasResponse() && in_array($e->getResponse()->getStatusCode(), self::$retryResponses) && $attempts <= self::MAX_ATTEMPTS) {
 					// sleep 1, 2, 4, 8, ... seconds
 					sleep(pow(2, $attempts));
 					$attempts++;

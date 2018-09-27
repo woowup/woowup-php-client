@@ -8,6 +8,7 @@ use WoowUp\Endpoints\Products;
 use WoowUp\Endpoints\Purchases;
 use WoowUp\Endpoints\UserEvents;
 use WoowUp\Endpoints\Users;
+use WoowUp\Endpoints\Account;
 
 class Client
 {
@@ -54,6 +55,12 @@ class Client
      * @var WoowUp\Endpoints\Branches
      */
     public $branches;
+  
+    /**
+     * Account endpoint wrapper
+     * @var WoowUp\Endpoints\Account
+     */
+    public $account;
 
     /**
      * Client constructor
@@ -72,5 +79,6 @@ class Client
         $this->events         = new Events($url, $apikey);
         $this->userEvents     = new UserEvents($url, $apikey);
         $this->branches       = new Branches($url,$apikey);
+        $this->account     = new Account($url, $apikey);
     }
 }
