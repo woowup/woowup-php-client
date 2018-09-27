@@ -25,7 +25,7 @@ class Branches extends Endpoint
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 
-    public function getBranch($branchId)
+    public function find($branchId)
     {
         $response = $this->get($this->host . '/branches/' . $branchId, []);
 
@@ -40,7 +40,7 @@ class Branches extends Endpoint
         return false;
     }
 
-    public function getBranches($page = 0, $limit = 10)
+    public function search($page = 0, $limit = 10)
     {
         $response = $this->get($this->host . '/branches/', [
             'page'   => $page,

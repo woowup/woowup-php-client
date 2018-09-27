@@ -43,7 +43,7 @@ class Users extends Endpoint
         return urlencode(base64_encode($uid));
     }
 
-    public function getUser($serviceUid)
+    public function find($serviceUid)
     {
         $response = $this->get($this->host . '/users/' . $this->encode($serviceUid), []);
 
@@ -58,7 +58,7 @@ class Users extends Endpoint
         return false;
     }
 
-    public function getUsers($page = 0, $limit = 25, $search = '')
+    public function search($page = 0, $limit = 25, $search = '')
     {
         $response = $this->get($this->host . '/users/', [
             'page'   => $page,
