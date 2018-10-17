@@ -24,6 +24,21 @@ class Products extends Endpoint
         return false;
     }
 
+    public function find($sku)
+    {
+        $response = $this->get($this->host . '/products/' . $this->encode($sku), []);
+
+        if ($response->getStatusCode() == Endpoint::HTTP_OK) {
+            $data = json_decode($response->getBody());
+
+            if (isset($data->payload)) {
+                return $data->payload;
+            }
+        }
+
+        return false;
+    }
+
     public function create($product)
     {
         $response = $this->post($this->host . '/products', $product);
