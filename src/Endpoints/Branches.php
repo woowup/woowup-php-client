@@ -11,9 +11,9 @@ class Branches extends Endpoint
         parent::__construct($host, $apikey);
     }
 
-    public function update($branch)
+    public function update($branchName, $branch)
     {
-        $response = $this->put($this->host . '/branches/' . base64_encode($branch['name']), $branch);
+        $response = $this->put($this->host . '/branches/' . base64_encode($branchName), $branch);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
