@@ -9,6 +9,7 @@ use WoowUp\Endpoints\Purchases;
 use WoowUp\Endpoints\UserEvents;
 use WoowUp\Endpoints\Users;
 use WoowUp\Endpoints\Account;
+use WoowUp\Endpoints\Multiusers;
 
 class Client
 {
@@ -63,6 +64,12 @@ class Client
     public $account;
 
     /**
+     * Multi-identifier endpoint wrapper
+     * @var WoowUp\Endpoints\Multiusers
+     */
+    public $multiusers;
+
+    /**
      * Client constructor
      * @param string $apikey Account's apikey
      * @param string $host   WoowUp API host
@@ -79,6 +86,7 @@ class Client
         $this->events         = new Events($url, $apikey);
         $this->userEvents     = new UserEvents($url, $apikey);
         $this->branches       = new Branches($url,$apikey);
-        $this->account     = new Account($url, $apikey);
+        $this->account        = new Account($url, $apikey);
+        $this->multiusers     = new Multiusers($url, $apikey);
     }
 }
