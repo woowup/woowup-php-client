@@ -85,4 +85,11 @@ class Multiusers extends Endpoint
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
+
+    public function createAbandonedCart($cart)
+    {
+        $response = $this->post($this->host . '/multiusers/abandoned-cart', $cart);
+
+        return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+    }
 }
