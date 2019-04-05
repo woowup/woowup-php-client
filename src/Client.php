@@ -2,6 +2,7 @@
 namespace WoowUp;
 
 use WoowUp\Endpoints\AbandonedCarts;
+use WoowUp\Endpoints\Blacklist;
 use WoowUp\Endpoints\Branches;
 use WoowUp\Endpoints\Events;
 use WoowUp\Endpoints\Products;
@@ -70,6 +71,12 @@ class Client
     public $multiusers;
 
     /**
+     * Blacklist endpoint wrapper
+     * @var WoowUp\Endpoints\Blacklist
+     */
+    public $blacklist;
+
+    /**
      * Client constructor
      * @param string $apikey Account's apikey
      * @param string $host   WoowUp API host
@@ -85,8 +92,9 @@ class Client
         $this->abandonedCarts = new AbandonedCarts($url, $apikey);
         $this->events         = new Events($url, $apikey);
         $this->userEvents     = new UserEvents($url, $apikey);
-        $this->branches       = new Branches($url,$apikey);
+        $this->branches       = new Branches($url, $apikey);
         $this->account        = new Account($url, $apikey);
         $this->multiusers     = new Multiusers($url, $apikey);
+        $this->blacklist      = new Blacklist($url, $apikey);
     }
 }
