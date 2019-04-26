@@ -58,12 +58,14 @@ class Users extends Endpoint
         return false;
     }
 
-    public function search($page = 0, $limit = 25, $search = '')
+    public function search($page = 0, $limit = 25, $search = '', $include = [], $exclude = [])
     {
         $response = $this->get($this->host . '/users/', [
-            'page'   => $page,
-            'limit'  => $limit,
-            'search' => $search,
+            'page'    => $page,
+            'limit'   => $limit,
+            'search'  => $search,
+            'include' => json_encode($include),
+            'exclude' => json_encode($exclude),
         ]);
 
         if ($response->getStatusCode() == Endpoint::HTTP_OK) {
@@ -105,4 +107,3 @@ class Users extends Endpoint
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 }
-
