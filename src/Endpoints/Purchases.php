@@ -30,6 +30,23 @@ class Purchases extends Endpoint
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 	}
+
+	public function find($invoiceNumber)
+	{
+		$response = $this->get($this->host . '/purchases', [
+			'invoice_number' => $invoiceNumber,
+		]);
+
+		if ($response->getStatusCode() == Endpoint::HTTP_OK) {
+            $data = json_decode($response->getBody());
+
+            if (isset($data->payload)) {
+                return $data->payload;
+            }
+        }
+
+        return false;
+	}
 }
 
 ?>
