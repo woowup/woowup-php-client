@@ -11,6 +11,7 @@ use WoowUp\Endpoints\UserEvents;
 use WoowUp\Endpoints\Users;
 use WoowUp\Endpoints\Account;
 use WoowUp\Endpoints\Multiusers;
+use WoowUp\Endpoints\Stats;
 
 class Client
 {
@@ -77,6 +78,12 @@ class Client
     public $blacklist;
 
     /**
+     * Integration stats endpoint wrapper
+     * @var  WoowUp\Endpoints\Stats
+     */
+    public $stats;
+
+    /**
      * Client constructor
      * @param string $apikey Account's apikey
      * @param string $host   WoowUp API host
@@ -96,5 +103,6 @@ class Client
         $this->account        = new Account($url, $apikey);
         $this->multiusers     = new Multiusers($url, $apikey);
         $this->blacklist      = new Blacklist($url, $apikey);
+        $this->stats          = new Stats($url, $apikey);
     }
 }
