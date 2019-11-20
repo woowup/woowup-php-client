@@ -47,6 +47,21 @@ class Purchases extends Endpoint
 
         return false;
 	}
+
+	public function findPayment($firstSixDigits)
+	{
+		$response = $this->get($this->host . '/purchases/iin/' . $firstSixDigits, []);
+
+		if ($response->getStatusCode() == Endpoint::HTTP_OK) {
+			$data = json_decode($response->getBody());
+
+			if (isset($data->payload)) {
+				return $data->payload;
+			}
+		}
+
+		return false;
+	}
 }
 
 ?>
