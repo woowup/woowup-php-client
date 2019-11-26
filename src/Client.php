@@ -64,7 +64,7 @@ class Client
      * CustomAttributes endpoint wrapper
      * @var WoowUp\Endpoints\CustomAttributes
      */
-    public $cAttributes;
+    public $customAttributes;
 
     /**
      * Account endpoint wrapper
@@ -100,17 +100,17 @@ class Client
     {
         $url = $host . '/' . $version;
 
-        $this->purchases      = new Purchases($url, $apikey);
-        $this->users          = new Users($url, $apikey);
-        $this->products       = new Products($url, $apikey);
-        $this->abandonedCarts = new AbandonedCarts($url, $apikey);
-        $this->events         = new Events($url, $apikey);
-        $this->userEvents     = new UserEvents($url, $apikey);
-        $this->branches       = new Branches($url, $apikey);
-        $this->cAttributes    = new CustomAttributes($url, $apikey);
-        $this->account        = new Account($url, $apikey);
-        $this->multiusers     = new Multiusers($url, $apikey);
-        $this->blacklist      = new Blacklist($url, $apikey);
-        $this->stats          = new Stats($url, $apikey);
+        $this->purchases        = new Purchases($url, $apikey);
+        $this->users            = new Users($url, $apikey);
+        $this->products         = new Products($url, $apikey);
+        $this->abandonedCarts   = new AbandonedCarts($url, $apikey);
+        $this->events           = new Events($url, $apikey);
+        $this->userEvents       = new UserEvents($url, $apikey);
+        $this->branches         = new Branches($url, $apikey);
+        $this->customAttributes = new CustomAttributes($url, $apikey);
+        $this->account          = new Account($url, $apikey);
+        $this->multiusers       = new Multiusers($url, $apikey);
+        $this->blacklist        = new Blacklist($url, $apikey);
+        $this->stats            = new Stats($url, $apikey);
     }
 }
