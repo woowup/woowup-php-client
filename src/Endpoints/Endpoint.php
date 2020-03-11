@@ -38,9 +38,31 @@ class Endpoint
         ]);
     }
 
+    protected function getAsync($url, $params)
+    {
+        return $this->requestAsync('GET', $url, [
+            'query'   => $params,
+            'headers' => [
+                'Authorization' => 'Basic ' . $this->apikey,
+                'Accept'        => 'application/json',
+            ],
+        ]);
+    }
+
     protected function post($url, $data)
     {
         return $this->request('POST', $url, [
+            'json'    => $data,
+            'headers' => [
+                'Authorization' => 'Basic ' . $this->apikey,
+                'Accept'        => 'application/json',
+            ],
+        ]);
+    }
+
+    protected function postAsync($url, $data)
+    {
+        return $this->requestAsync('POST', $url, [
             'json'    => $data,
             'headers' => [
                 'Authorization' => 'Basic ' . $this->apikey,
@@ -95,6 +117,17 @@ class Endpoint
         ]);
     }
 
+    protected function putAsync($url, $data)
+    {
+        return $this->requestAsync('PUT', $url, [
+            'json'    => $data,
+            'headers' => [
+                'Authorization' => 'Basic ' . $this->apikey,
+                'Accept'        => 'application/json',
+            ],
+        ]);
+    }
+
     protected function delete($url)
     {
         return $this->request('DELETE', $url, [
@@ -123,6 +156,11 @@ class Endpoint
         }
 
         throw new \Exception("Max request attempts reached");
+    }
+
+    protected function requestAsync($verb, $url, $params)
+    {
+        return $this->http->requestAsync($verb, $url, $params);
     }
 
     protected function encode($string)

@@ -24,6 +24,11 @@ class Products extends Endpoint
         return false;
     }
 
+    public function existAsync($sku) // returns promise
+    {
+        return $this->getAsync($this->host.'/products/'.$this->encode($sku).'/exist', []);
+    }
+
     public function find($sku)
     {
         $response = $this->get($this->host . '/products/' . $this->encode($sku), []);
@@ -46,6 +51,11 @@ class Products extends Endpoint
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 
+    public function createAsync($product) // returns promise
+    {
+        return $this->postAsync($this->host.'/products', $product);
+    }
+
     public function update($sku, $product)
     {
         $response = $this->put($this->host . '/products/' . $this->encode($sku), $product);
@@ -57,6 +67,11 @@ class Products extends Endpoint
         }
 
         return false;
+    }
+
+    public function updateAsync($sku, $product) // returns promise
+    {
+        return $this->putAsync($this->host.'/products/'.$this->encode($sku), $product);
     }
 
     public function search($search = [], $page = 0, $limit = 100)
