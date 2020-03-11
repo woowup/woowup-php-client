@@ -24,11 +24,21 @@ class Purchases extends Endpoint
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 	}
 
+	public function createAsync($purchase) // returns promise
+	{
+		return $this->postAsync($this->host.'/purchases', $purchase);
+	}
+
 	public function update($purchase)
 	{
 		$response = $this->put($this->host.'/purchases', $purchase);
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+	}
+
+	public function updateAsync($purchase) // returns promise
+	{
+		return $this->putAsync($this->host.'/purchases', $purchase);
 	}
 
 	public function find($invoiceNumber)

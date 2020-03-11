@@ -18,6 +18,11 @@ class Users extends Endpoint
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 
+    public function updateAsync($user) // should not be used
+    {
+        return $this->put($this->host.'/users/'.$this->encode($user['service_uid']), $user);
+    }
+
     public function create($user)
     {
         $response = $this->post($this->host . '/users', $user);

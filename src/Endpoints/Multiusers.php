@@ -7,6 +7,7 @@ class Multiusers extends Endpoint
         'document'    => '',
         'email'       => '',
         'service_uid' => '',
+        'telephone'   => '',
     ];
 
     public function __construct($host, $apikey)
@@ -19,6 +20,11 @@ class Multiusers extends Endpoint
         $response = $this->put($this->host . '/multiusers', $user);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+    }
+
+    public function updateAsync($user) // returns promise
+    {
+        return $this->putAsync($this->host.'/multiusers', $user);
     }
 
     public function exist($identity)
@@ -34,6 +40,13 @@ class Multiusers extends Endpoint
         }
 
         return false;
+    }
+
+    public function existAsync($identity) // returns promise
+    {
+        $identity = array_merge(self::$DEFAULT_IDENTITY, $identity);
+
+        return $this->getAsync($this->host.'/multiusers/exist', $identity);
     }
 
     public function find($identity)
