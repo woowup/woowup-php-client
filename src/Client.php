@@ -13,6 +13,7 @@ use WoowUp\Endpoints\Users;
 use WoowUp\Endpoints\Account;
 use WoowUp\Endpoints\Multiusers;
 use WoowUp\Endpoints\Stats;
+use WoowUp\Endpoints\Banks;
 
 class Client
 {
@@ -91,6 +92,11 @@ class Client
     public $stats;
 
     /**
+     * Integration banks endpoint wrapper
+     * @var  WoowUp\Endpoints\Banks
+     */
+    public $banks;
+    /**
      * Client constructor
      * @param string $apikey Account's apikey
      * @param string $host   WoowUp API host
@@ -100,17 +106,18 @@ class Client
     {
         $url = $host . '/' . $version;
 
-        $this->purchases        = new Purchases($url, $apikey);
-        $this->users            = new Users($url, $apikey);
-        $this->products         = new Products($url, $apikey);
-        $this->abandonedCarts   = new AbandonedCarts($url, $apikey);
-        $this->events           = new Events($url, $apikey);
-        $this->userEvents       = new UserEvents($url, $apikey);
-        $this->branches         = new Branches($url, $apikey);
+        $this->purchases      = new Purchases($url, $apikey);
+        $this->users          = new Users($url, $apikey);
+        $this->products       = new Products($url, $apikey);
+        $this->abandonedCarts = new AbandonedCarts($url, $apikey);
+        $this->events         = new Events($url, $apikey);
+        $this->userEvents     = new UserEvents($url, $apikey);
+        $this->branches       = new Branches($url, $apikey);
+        $this->account        = new Account($url, $apikey);
+        $this->multiusers     = new Multiusers($url, $apikey);
+        $this->blacklist      = new Blacklist($url, $apikey);
+        $this->stats          = new Stats($url, $apikey);
+        $this->banks          = new Banks($url, $apikey);
         $this->customAttributes = new CustomAttributes($url, $apikey);
-        $this->account          = new Account($url, $apikey);
-        $this->multiusers       = new Multiusers($url, $apikey);
-        $this->blacklist        = new Blacklist($url, $apikey);
-        $this->stats            = new Stats($url, $apikey);
     }
 }
