@@ -27,7 +27,7 @@ class Endpoint
         $this->http   = new \GuzzleHttp\Client();
     }
 
-    protected function get($url, $params)
+    protected function get($url, $params = [])
     {
         return $this->request('GET', $url, [
             'query'   => $params,
@@ -38,7 +38,7 @@ class Endpoint
         ]);
     }
 
-    protected function getAsync($url, $params)
+    protected function getAsync($url, $params = [])
     {
         return $this->requestAsync('GET', $url, [
             'query'   => $params,
