@@ -14,8 +14,12 @@ class Banks extends Endpoint
     public function getDataFromFirstSixDigits(string $firstSixDigits)
     {
         $response = $this->get($this->host . '/purchases/iin/'.$firstSixDigits);
+        if ($response->getStatusCode() != Endpoint::HTTP_OK) {
+            return null;
+        }
 
-        return $response->getStatusCode() == Endpoint::HTTP_OK ? $response->getBody() : null;
+        $data = json_decode($response->getBody());
+        return $data->payload ?? null;
     }
 
     public function getDataFromFirstSixDigitsAsync(string $firstSixDigits)
