@@ -19,11 +19,7 @@ class Banks extends Endpoint
         }
 
         $data = json_decode($response->getBody());
-        if (!isset($data->payload)) {
-            return null;
-        }
-
-        return $data->payload;
+        return $data->payload ?? null;
     }
 
     public function getDataFromFirstSixDigitsAsync(string $firstSixDigits)
