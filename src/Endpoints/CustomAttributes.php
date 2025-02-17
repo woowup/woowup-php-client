@@ -3,7 +3,7 @@ namespace WoowUp\Endpoints;
 
 class CustomAttributes extends Endpoint
 {
-	const ENTITYS = [
+	const ENTITIES = [
 		'customers' 	=> 'custom-attributes',
 		'purchases'		=> 'purchase-custom-attributes',
 		'purchase-item' => 'purchase-item-custom-attributes',
@@ -18,7 +18,7 @@ class CustomAttributes extends Endpoint
 
     public function getCustomAttributesDefinition($entity = 'customers')
     {
-        $response = $this->get($this->host . '/account/' . self::ENTITYS[$entity], []);
+        $response = $this->get($this->host . '/account/' . self::ENTITIES[$entity], []);
 
         if ($response->getStatusCode() == Endpoint::HTTP_OK) {
             $data = json_decode($response->getBody());
@@ -33,10 +33,20 @@ class CustomAttributes extends Endpoint
 
     public function updateAttributeDefinition($data, $entity)
     {
-    	$response = $this->put($this->host . '/account/' . self::ENTITYS[$entity] . '/' . $data->name, $data);
+    	$response = $this->put($this->host . '/account/' . self::ENTITIES[$entity] . '/' . $data->name, $data);
 
     	return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 
+    }
+
+    public function create($customAttribute, $entity)
+    {
+        try {
+            $response = $this->post($this->host.'/account/'.self::ENTITIES[$entity], $customAttribute);
+            return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+        } catch (\Exception $e) {
+            throw new \Exception("Custom Attribute is not valid", 1);
+        }
     }
 }
 
