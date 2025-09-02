@@ -1,6 +1,8 @@
 <?php
 namespace WoowUp\Endpoints;
 
+use UserEmailSanitizer;
+
 class Multiusers extends Endpoint
 {
     protected static $DEFAULT_IDENTITY = [
@@ -15,10 +17,10 @@ class Multiusers extends Endpoint
         parent::__construct($host, $apikey);
     }
 
-    public function update($user)
+    public function update($user, $sanitize = false)
     {
+        if ($sanitize) $user = UserEmailSanitizer::sanitize($user);
         $response = $this->put($this->host . '/multiusers', $user);
-
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 
