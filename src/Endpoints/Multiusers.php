@@ -1,7 +1,7 @@
 <?php
 namespace WoowUp\Endpoints;
 
-use UserEmailSanitizer;
+use WoowUp\Support\Sanitizer\EmailSanitizer;
 
 class Multiusers extends Endpoint
 {
@@ -19,7 +19,7 @@ class Multiusers extends Endpoint
 
     public function update($user, $sanitize = false)
     {
-        if ($sanitize) $user = UserEmailSanitizer::sanitize($user);
+        if ($sanitize) $user = EmailSanitizer::sanitize($user);
         $response = $this->put($this->host . '/multiusers', $user);
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }

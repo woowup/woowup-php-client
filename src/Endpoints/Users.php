@@ -1,7 +1,7 @@
 <?php
 namespace WoowUp\Endpoints;
 
-use UserEmailSanitizer;
+use WoowUp\Support\Sanitizer\EmailSanitizer;
 
 /**
  *
@@ -27,7 +27,7 @@ class Users extends Endpoint
 
     public function create($user, $sanitize = false)
     {
-        if ($sanitize) $user = UserEmailSanitizer::sanitize($user);
+        if ($sanitize) $user = EmailSanitizer::sanitize($user);
         $response = $this->post($this->host . '/users', $user);
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }

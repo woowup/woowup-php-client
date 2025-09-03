@@ -1,7 +1,8 @@
 <?php
 
+namespace WoowUp\Support\Sanitizer;
 
-class UserEmailSanitizer
+class EmailSanitizer
 {
     const BLACKLISTED_EMAIL_PATTERNS = [
         '*noreply@mercadolibre.com',
@@ -27,7 +28,38 @@ class UserEmailSanitizer
     const DISABLED_VALUE = "disabled";
     const DISABLED_REASON_VALUE = "other";
 
-    public static function sanitize(array $customer): array
+    public static function sanitize(array $data): array
+    {
+        if (isset($data['customer']) && is_array($data['customer'])) {
+            return self::sanitizePurchase($data);
+        }
+
+        return self::sanitizeCustomer($data);
+    }
+
+    public static function sanitizePurchase(array $purchase): array
+    {
+        if (isset($purchase['customer']) && !empty($purchase['customer']['email'])) {
+            $purchase['customer'] = self::sanitizeCustomer($purchase['customer']);
+            $purchase['email'] = $purchase['customer']['email'];
+            return $purchase;
+        }
+
+        if (!empty($purchase['email'])) {
+            $email = trim($purchase['email']);
+
+            if (self::isBlacklistedEmail($email)) {
+                $purchase['email'] = self::REPLACEMENT_EMAIL;
+            } else {
+                $validatedEmail = self::validateEmail($email);
+                $purchase['email'] = $validatedEmail ?? $email;
+            }
+        }
+
+        return $purchase;
+    }
+
+    public static function sanitizeCustomer(array $customer): array
     {
         if (empty($customer) || empty($customer['email'])) {
             return $customer;
@@ -67,10 +99,10 @@ class UserEmailSanitizer
     }
 
     /**
-     * Check if the email is valid. If it is valid, it returns true,
+     * Check if the email domain is whitelisted. If it is whitelisted, it returns true,
      * otherwise it returns false.
      *
-     * @param array $customer
+     * @param string $email
      * @return bool
      */
     public static function isWhitelistedDomain(string $email): bool
