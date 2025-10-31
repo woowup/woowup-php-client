@@ -13,6 +13,14 @@ class Multiusers extends Endpoint
     public function __construct($host, $apikey)
     {
         parent::__construct($host, $apikey);
+
+        $this->enableSanitization = true;
+        $this->sanitizationCallables = [
+            [
+                'path' => ['street'],
+                'callable' => fn($v) => $this->cleanser->street->truncate($v),
+            ],
+        ];
     }
 
     public function update($user)
