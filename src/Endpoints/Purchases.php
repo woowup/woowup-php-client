@@ -5,9 +5,17 @@ namespace WoowUp\Endpoints;
 */
 class Purchases extends Endpoint
 {
-	function __construct($host, $apikey)
+	public function __construct($host, $apikey)
 	{
 		parent::__construct($host, $apikey);
+
+        $this->enableSanitization = true;
+        $this->sanitizationCallables = [
+            [
+                'path' => ['customer','street'],
+                'callable' => fn($v) => $this->cleanser->street->truncate($v),
+            ],
+        ];
 	}
 
 	public function bulkCreate($purchases)
