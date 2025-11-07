@@ -16,6 +16,10 @@ class Users extends Endpoint
                 'path' => ['street'],
                 'callable' => fn($v) => $this->cleanser->street->truncate($v),
             ],
+            [
+                'path' => ['telephone'],
+                'callable' => fn($v) => $this->cleanser->telephone->sanitize($v),
+            ],
         ];
     }
 

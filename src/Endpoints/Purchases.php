@@ -15,6 +15,14 @@ class Purchases extends Endpoint
                 'path' => ['customer','street'],
                 'callable' => fn($v) => $this->cleanser->street->truncate($v),
             ],
+            [
+                'path' => ['customer','telephone'],
+                'callable' => fn($v) => $this->cleanser->telephone->sanitize($v),
+            ],
+            [
+                'path' => ['telephone'],
+                'callable' => fn($v) => $this->cleanser->telephone->sanitize($v),
+            ],
         ];
 	}
 

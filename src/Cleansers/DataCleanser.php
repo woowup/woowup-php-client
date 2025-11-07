@@ -15,6 +15,11 @@ class DataCleanser
     public $street;
 
     /**
+     * @var TelephoneCleanser Telephone field cleanser
+     */
+    public $telephone;
+
+    /**
      * Initialize all cleansers
      *
      * Creates instances of all specialized cleanser classes
@@ -22,5 +27,6 @@ class DataCleanser
     public function __construct()
     {
         $this->street = new StreetCleanser();
+        $this->telephone = new TelephoneCleanser();
     }
 }
