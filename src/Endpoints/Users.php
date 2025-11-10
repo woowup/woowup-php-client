@@ -121,7 +121,7 @@ class Users extends Endpoint
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 
-    private function cleanTelephone($data){
+    protected function cleanTelephone($data){
         $originalTelephone = $data['telephone'] ?? null;
 
         if (!$originalTelephone) {

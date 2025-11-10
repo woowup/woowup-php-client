@@ -81,7 +81,7 @@ class Purchases extends Endpoint
 		return false;
 	}
 
-    private function cleanTelephone($data){
+    protected function cleanTelephone($data){
         $originalTelephone = $data['telephone'] ?? null;
 
         if (!$originalTelephone) {
