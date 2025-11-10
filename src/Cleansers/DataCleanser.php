@@ -20,6 +20,11 @@ class DataCleanser
     public $telephone;
 
     /**
+     * @var TagsCleanser Tags management cleanser
+     */
+    public $tags;
+
+    /**
      * Initialize all cleansers
      *
      * Creates instances of all specialized cleanser classes
@@ -28,5 +33,6 @@ class DataCleanser
     {
         $this->street = new StreetCleanser();
         $this->telephone = new TelephoneCleanser();
+        $this->tags = new TagsCleanser();
     }
 }

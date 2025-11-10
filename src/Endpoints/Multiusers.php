@@ -20,10 +20,6 @@ class Multiusers extends Endpoint
                 'path' => ['street'],
                 'callable' => fn($v) => $this->cleanser->street->truncate($v),
             ],
-            [
-                'path' => ['telephone'],
-                'callable' => fn($v) => $this->cleanser->telephone->sanitize($v),
-            ],
         ];
     }
 
@@ -116,5 +112,32 @@ class Multiusers extends Endpoint
         $response = $this->post($this->host . '/multiusers/abandoned-cart', $cart);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+    }
+
+    private function cleanTelephone($data){
+        $originalTelephone = $data['telephone'] ?? null;
+
+        if (!$originalTelephone) {
+            return $data;
+        }
+
+        $sanitizedTelephone = $this->cleanser->telephone->sanitize($originalTelephone);
+
+        if ($sanitizedTelephone === false) {
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_rejected');
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
+
+            $data['whatsapp_enabled'] = 'disabled';
+            $data['whatsapp_enabled_reason'] = 'other';
+            $data['sms_enabled'] = 'disabled';
+            $data['sms_enabled_reason'] = 'other';
+           return $data;
+        }
+
+        $data['telephone'] = $sanitizedTelephone;
+        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_cleaned');
+        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_rejected');
+
+        return $data;
     }
 }

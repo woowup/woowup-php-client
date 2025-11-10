@@ -14,15 +14,7 @@ class Purchases extends Endpoint
             [
                 'path' => ['customer','street'],
                 'callable' => fn($v) => $this->cleanser->street->truncate($v),
-            ],
-            [
-                'path' => ['customer','telephone'],
-                'callable' => fn($v) => $this->cleanser->telephone->sanitize($v),
-            ],
-            [
-                'path' => ['telephone'],
-                'callable' => fn($v) => $this->cleanser->telephone->sanitize($v),
-            ],
+            ]
         ];
 	}
 
@@ -88,6 +80,24 @@ class Purchases extends Endpoint
 
 		return false;
 	}
+
+    private function cleanTelephone($data){
+        $originalTelephone = $data['telephone'] ?? null;
+
+        if (!$originalTelephone) {
+            return $data;
+        }
+
+        $sanitizedTelephone = $this->cleanser->telephone->sanitize($originalTelephone);
+
+        if ($sanitizedTelephone === false) {
+            return $data;
+        }
+
+        $data['telephone'] = $sanitizedTelephone;
+
+        return $data;
+    }
 }
 
 ?>
