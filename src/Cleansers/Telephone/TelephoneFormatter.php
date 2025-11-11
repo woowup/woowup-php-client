@@ -51,7 +51,7 @@ class TelephoneFormatter
 
         $telephone = $this->extractFirstValidNumber($telephone);
         $telephone = $this->removeExtension($telephone);
-        $telephone = $this->convertDoubleZeroToPlus($telephone);
+        $telephone = $this->removeDoubleZero($telephone);
         $telephone = $this->removeDuplicateCountryCode($telephone);
         $telephone = $this->removeArgentina15Prefix($telephone);
 
@@ -147,25 +147,19 @@ class TelephoneFormatter
 
 
     /**
-     * Converts international dialing prefix "00" to "+".
+     * Removes leading "00" from international numbers if valid.
      *
-     * Many countries use "00" instead of "+" for international calls.
-     * This method standardizes the format by replacing "00" with "+",
-     * but only if the number appears to be valid (has at least 8 digits after the prefix).
+     * Converts numbers starting with "00" to omit the prefix when
+     * there are at least 10 digits, standardizing the format.
      *
      * Examples:
-     * - "005491112345678" → "+5491112345678"
-     * - "00 54 911 1234 5678" → "+54 911 1234 5678"
-     * - "001234567890" → "+1234567890"
+     * - "005491112345678" → "5491112345678"
+     * - "00 54 911 1234 5678" → "54 911 1234 5678"
      *
-     * Conversion rules:
-     * - Applies only if the string starts with "00".
-     * - Requires at least 8 digits after "00" (to avoid false positives).
-     *
-     * @param string $telephone Raw telephone number possibly starting with "00"
-     * @return string Telephone with standardized "+" international prefix
+     * @param string $telephone Input number
+     * @return string Number without "00" prefix when applicable
      */
-    private function convertDoubleZeroToPlus(string $telephone): string
+    private function removeDoubleZero(string $telephone): string
     {
         $telephone = trim($telephone);
 
