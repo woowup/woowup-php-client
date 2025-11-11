@@ -134,6 +134,10 @@ class Multiusers extends Endpoint
            return $data;
         }
 
+        if ($originalTelephone === $sanitizedTelephone) {
+            return $data;
+        }
+
         $data['telephone'] = $sanitizedTelephone;
         $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_cleaned');
         $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_rejected');
