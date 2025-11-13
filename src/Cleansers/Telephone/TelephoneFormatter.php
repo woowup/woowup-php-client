@@ -189,10 +189,12 @@ class TelephoneFormatter
     {
         $telephone = trim($telephone);
 
-        if (strpos($telephone, '+') === 0) return $telephone;
-
         $telephone = $this->characterCleanser->removeFormatting($telephone);
         $telephone = $this->characterCleanser->keepDigitsAndPlus($telephone);
+
+        if (strpos($telephone, '+') === 0) {
+            return $telephone;
+        }
 
         foreach (self::COUNTRY_CODE as $countryCode) {
             if (strpos($telephone, $countryCode) === 0) {
