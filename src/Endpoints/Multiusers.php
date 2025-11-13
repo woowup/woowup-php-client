@@ -126,6 +126,7 @@ class Multiusers extends Endpoint
         if ($sanitizedTelephone === false) {
             $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_rejected');
             $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_validated');
 
             $data['whatsapp_enabled'] = 'disabled';
             $data['whatsapp_enabled_reason'] = 'other';
@@ -134,13 +135,15 @@ class Multiusers extends Endpoint
            return $data;
         }
 
-        if ($originalTelephone === $sanitizedTelephone) {
-            return $data;
-        }
-
-        $data['telephone'] = $sanitizedTelephone;
-        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_cleaned');
+        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_validated');
         $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_rejected');
+
+        if ($originalTelephone !== $sanitizedTelephone) {
+            $data['telephone'] = $sanitizedTelephone;
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_cleaned');
+        } else {
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
+        }
 
         return $data;
     }
