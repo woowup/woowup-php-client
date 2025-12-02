@@ -128,6 +128,11 @@ class Users extends Endpoint
             return $data;
         }
 
+        if ($this->cleanser->telephone->hasApiRejectedPatterns($originalTelephone)) {
+            unset($data['telephone']);
+            return $data;
+        }
+
         $sanitizedTelephone = $this->cleanser->telephone->sanitize($originalTelephone);
 
         if ($sanitizedTelephone === false) {
