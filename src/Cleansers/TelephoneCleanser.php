@@ -65,6 +65,10 @@ class TelephoneCleanser
             return false;
         }
 
+        if ($this->hasInvalidArithmeticOperators($telephone)) {
+            return false;
+        }
+
         $cleanedTelephone = $this->formatter->clean($telephone);
 
         if ($cleanedTelephone === '') {
@@ -89,5 +93,45 @@ class TelephoneCleanser
     public function isValid($telephone): bool
     {
         return $this->sanitize($telephone) !== false;
+    }
+
+    /**
+     * Check if telephone contains patterns that the API rejects
+     *
+     * These patterns cause the API to reject the entire request, so we need
+     * to detect them early and skip processing entirely (no tags, no validation).
+     *
+     * @param mixed $telephone Telephone to check
+     * @return bool True if contains API-rejected patterns, false otherwise
+     */
+    public function hasApiRejectedPatterns($telephone): bool
+    {
+        if (!is_string($telephone) && !is_numeric($telephone)) {
+            return false;
+        }
+
+        $telephone = (string) $telephone;
+        $telephone = trim($telephone);
+
+        if ($telephone === '') {
+            return false;
+        }
+
+        return $this->hasInvalidArithmeticOperators($telephone);
+    }
+
+    /**
+     * Check if telephone contains invalid arithmetic operators
+     *
+     * @param string $telephone Telephone to check
+     * @return bool True if contains invalid operators, false otherwise
+     */
+    private function hasInvalidArithmeticOperators(string $telephone): bool
+    {
+        if (preg_match('/\d\+\d/', $telephone)) {
+            return true;
+        }
+
+        return false;
     }
 }
