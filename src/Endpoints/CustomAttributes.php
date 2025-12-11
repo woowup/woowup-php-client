@@ -38,5 +38,12 @@ class CustomAttributes extends Endpoint
     	return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 
     }
+
+    public function create($customAttribute, $entity)
+    {
+        $response = $this->post($this->host . '/account/' . self::ENTITYS[$entity], $customAttribute);
+
+        return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
+    }
 }
 
