@@ -71,6 +71,21 @@ class Users extends Endpoint
         return false;
     }
 
+    public function removeTags($userAppId, $tags)
+    {
+        if (is_array($tags)) {
+            $tags = implode(',', $tags);
+        }
+
+        $params = [
+            'remove_tags' => $tags
+        ];
+
+        $response = $this->put($this->host . '/users/' . $userAppId, $params);
+
+        return $response->getStatusCode() == Endpoint::HTTP_OK;
+    }
+
     public function search($page = 0, $limit = 25, $search = '', $include = [], $exclude = [], $segmentId = '')
     {
         $response = $this->get($this->host . '/users/', [
