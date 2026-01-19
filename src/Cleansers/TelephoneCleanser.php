@@ -6,8 +6,8 @@ use WoowUp\Cleansers\Validators\ConsecutiveDigitsValidator;
 use WoowUp\Cleansers\Validators\GenericPhoneValidator;
 use WoowUp\Cleansers\Validators\LengthValidator;
 use WoowUp\Cleansers\Validators\NumericValidator;
-use WoowUp\Cleansers\Validators\RepeatedDigitsValidator;
-use WoowUp\Cleansers\Validators\SequentialDigitsValidator;
+use WoowUp\Cleansers\Validators\RepeatedValidator;
+use WoowUp\Cleansers\Validators\SequenceValidator;
 
 /**
  * Telephone number sanitizer and validator
@@ -32,9 +32,9 @@ class TelephoneCleanser
         $this->validators = [
             new NumericValidator(),
             new LengthValidator(8, 15),
-            new RepeatedDigitsValidator(),
+            new RepeatedValidator(5, true),
             new ConsecutiveDigitsValidator(),
-            new SequentialDigitsValidator(),
+            new SequenceValidator(8, true),
             new GenericPhoneValidator(),
         ];
 

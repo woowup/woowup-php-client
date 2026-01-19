@@ -20,6 +20,14 @@ class Purchases extends Endpoint
 
 	public function bulkCreate($purchases)
 	{
+        foreach ($purchases as &$purchase) {
+            if (isset($purchase['customer'])) {
+                $purchase['customer'] = $this->cleanTelephone($purchase['customer']);
+                $purchase['customer'] = $this->cleanEmail($purchase['customer']);
+            }
+        }
+        unset($purchase);
+
 		$response = $this->post($this->host.'/purchases/bulk', $purchases);
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -27,6 +35,10 @@ class Purchases extends Endpoint
 
 	public function create($purchase)
 	{
+        if (isset($purchase['customer'])) {
+            $purchase['customer'] = $this->cleanTelephone($purchase['customer']);
+            $purchase['customer'] = $this->cleanEmail($purchase['customer']);
+        }
 		$response = $this->post($this->host.'/purchases', $purchase);
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -34,11 +46,19 @@ class Purchases extends Endpoint
 
 	public function createAsync($purchase) // returns promise
 	{
+        if (isset($purchase['customer'])) {
+            $purchase['customer'] = $this->cleanTelephone($purchase['customer']);
+            $purchase['customer'] = $this->cleanEmail($purchase['customer']);
+        }
 		return $this->postAsync($this->host.'/purchases', $purchase);
 	}
 
 	public function update($purchase)
 	{
+        if (isset($purchase['customer'])) {
+            $purchase['customer'] = $this->cleanTelephone($purchase['customer']);
+            $purchase['customer'] = $this->cleanEmail($purchase['customer']);
+        }
 		$response = $this->put($this->host.'/purchases', $purchase);
 
 		return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -46,6 +66,10 @@ class Purchases extends Endpoint
 
 	public function updateAsync($purchase) // returns promise
 	{
+        if (isset($purchase['customer'])) {
+            $purchase['customer'] = $this->cleanTelephone($purchase['customer']);
+            $purchase['customer'] = $this->cleanEmail($purchase['customer']);
+        }
 		return $this->putAsync($this->host.'/purchases', $purchase);
 	}
 
@@ -103,6 +127,22 @@ class Purchases extends Endpoint
 
         return $data;
     }
-}
 
+    protected function cleanEmail($data)
+    {
+        $originalEmail = $data['email'] ?? null;
+
+        if (!$originalEmail) {
+            return $data;
+        }
+
+        $sanitizedEmail = $this->cleanser->email->sanitize($originalEmail);
+
+        if ($sanitizedEmail !== false) {
+            $data['email'] = $sanitizedEmail;
+        }
+
+        return $data;
+    }
+}
 ?>
