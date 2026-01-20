@@ -23,10 +23,10 @@ class SequenceValidator implements ValidatorInterface
     ];
 
     /**
-     * Constructor
+     * Constructor.
      *
-     * @param int $minSequenceLength Minimum sequence length to reject (default: 7)
-     * @param bool $numericOnly Only validate if input is purely numeric (default: false)
+     * @param int $minSequenceLength Minimum sequence length to reject (default: 8)
+     * @param bool $digitsOnly Only validate if input is purely numeric (default: true)
      */
     public function __construct(int $minSequenceLength = 8, bool $digitsOnly = true) {
         $this->minSequenceLength = $minSequenceLength;
@@ -168,7 +168,12 @@ class SequenceValidator implements ValidatorInterface
     }
 
     /**
-     * Check if input contains at least N consecutive characters from a reference string
+     * Checks if input contains at least N consecutive characters from a reference string.
+     * 
+     * @param string $input The input to check
+     * @param string $reference The reference string to search for sequences
+     * @param int $min Minimum sequence length
+     * @return bool true if sequence found, false otherwise
      */
     private function containsSequence(string $input, string $reference, int $min): bool
     {

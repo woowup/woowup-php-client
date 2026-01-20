@@ -17,11 +17,19 @@ EmailFormatter
         $this->characterCleanser = new CharacterCleanser();
     }
 
+    /**
+     * Cleans and normalizes the user part of an email.
+     * 
+     * Removes accents, trims symbols, normalizes consecutive symbols,
+     * and filters to email-safe characters only.
+     * 
+     * @param string $email The user part to clean
+     * @return string The cleaned email or 'noemail@noemail.com' if invalid characters found
+     */
     public function clean(string $email): string
     {
         if ($this->hasInvalidSpanishChars($email)) {
-            // Devolvemos vacío para que el caller trate el email como inválido.
-            return '';
+            return 'noemail@noemail.com';
         }
 
         $email = $this->characterCleanser->removeAccents($email);
@@ -81,6 +89,14 @@ EmailFormatter
         return preg_replace($pattern, '@', $email);
     }
 
+    /**
+     * Checks if the string contains invalid characters for email addresses.
+     * 
+     * Currently only detects 'ñ', which is invalid in email addresses.
+     * 
+     * @param string $input The string to check
+     * @return bool true if invalid characters found, false otherwise
+     */
     private function hasInvalidSpanishChars(string $input): bool
     {
         return (strpos($input, 'ñ') !== false);

@@ -10,8 +10,8 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
 
 class EmailCleanser
 {
-	const GENERIC_TLDS    = ["com", "net", "org", "info", "edu", "gov", "mil"];
-	const GEOGRAPHIC_TLDS = ["ar", "es", "co", "pe", "bo", "br", "fr", "do", "co.uk"];
+    const GENERIC_TLDS    = ["com", "net", "org", "info", "edu", "gov", "mil"];
+    const GEOGRAPHIC_TLDS = ["ar", "es", "co", "pe", "bo", "br", "fr", "do", "co.uk"];
 
     const GMAIL_DOMAINS = [
         'gmail',
@@ -21,8 +21,6 @@ class EmailCleanser
         'gemail', 'gaiml', 'gail', 'gmailcom', 'gmailcomcom',
     ];
 
-    // Dominios conocidos que NO deben mezclarse con Gmail
-    // Si detectamos múltiples dominios en el mismo email, no corregimos a Gmail
     const KNOWN_DOMAINS = [
         'hotmail', 'hot', 'outlook', 'yahoo', 'live', 'msn', 'aol',
         'icloud', 'me', 'mac', 'protonmail', 'proton', 'zoho',
@@ -37,26 +35,33 @@ class EmailCleanser
      * @var array Array of ValidatorInterface instances
      */
     private $validators;
-
     private $emailUser;
     private $emailDomain;
 
-	public function __construct()
-	{
+    public function __construct()
+    {
         $this->formatter = new EmailFormatter();
         $this->validators = [
             new LengthValidator(6, 30),
-            new RepeatedValidator(8, false),
-            new SequenceValidator(7, false),
+            new RepeatedValidator(6, false),
+            new SequenceValidator(4, false),
             new GenericEmailValidator(),
         ];
         $this->emailDomain = null;
-	    $this->emailUser   = null;
+        $this->emailUser   = null;
     }
 
-	public function sanitize($email)
-	{
-        // Normalizamos el tipo de entrada 
+    /**
+     * Sanitizes an email: cleans, normalizes and validates.
+     * 
+     * Cleans VTEX emails, detects Gmail typos, applies deep cleaning for Gmail,
+     * and rejects emails with mixed domains (e.g., gmailhotmail.com).
+     * 
+     * @param string|numeric $email The email to sanitize
+     * @return string|false The sanitized email or false if invalid
+     */
+    public function sanitize($email)
+    {
         if (!is_string($email) && !is_numeric($email)) {
             return false;
         }
@@ -68,9 +73,14 @@ class EmailCleanser
             return false;
         }
 
+        $vtexResult = $this->cleanVtexEmail($email);
+        if ($vtexResult === false) {
+            return false;
+        }
+        $email = $vtexResult;
+
         $this->extractEmailParts($email);
 
-        // Si no pudimos extraer partes válidas, el email es inválido
         if ($this->emailUser === null || $this->emailDomain === null) {
             return false;
         }
@@ -78,18 +88,15 @@ class EmailCleanser
         $isGmail = ($this->emailDomain === '@gmail.com');
 
         if ($isGmail) {
-            // Si es Gmail (o variante mal escrita), aplicar limpieza profunda
             $this->emailUser = mb_strtolower(trim((string) $this->emailUser));
             $cleanedUserEmail = $this->formatter->clean((string) $this->emailUser);
 
-            if ($cleanedUserEmail === '') {
-                return false;
+            if ($cleanedUserEmail == 'noemail@noemail.com') {
+                return $cleanedUserEmail;
             }
 
-            // Guardamos el user ya formateado aunque luego falle validación, para inspección
             $this->emailUser = $cleanedUserEmail;
 
-            // Validar el email user limpio con todos los validadores
             foreach ($this->validators as $validator) {
                 if (!$validator->validate($cleanedUserEmail)) {
                     return false;
@@ -99,34 +106,93 @@ class EmailCleanser
             $sanitizedEmail = $cleanedUserEmail . '@gmail.com';
         } else {
             $sanitizedEmail = $this->prettify($email);
-            $this->emailUser = mb_strtolower(trim((string) $this->emailUser));
         }
 
         return $sanitizedEmail;
-	}
+    }
 
-	public function validate($email)
-	{
-		return (filter_var($email, FILTER_VALIDATE_EMAIL) !== false);
-	}
+    /**
+     * Validates if an email has a valid RFC format.
+     * 
+     * @param string $email The email to validate
+     * @return bool true if format is valid, false otherwise
+     */
+    public function validate($email)
+    {
+        return (filter_var($email, FILTER_VALIDATE_EMAIL) !== false);
+    }
 
-	public function prettify($email)
-	{
-		return utf8_encode(mb_strtolower(trim($email)));
-	}
+    /**
+     * Normalizes an email: converts to lowercase, trims spaces and encodes UTF-8.
+     * 
+     * @param string $email The email to normalize
+     * @return string The normalized email
+     */
+    public function prettify($email)
+    {
+        return utf8_encode(mb_strtolower(trim($email)));
+    }
 
-	protected function buildPopularTlds()
-	{
-		$popularTlds = array_merge(self::GENERIC_TLDS, self::GEOGRAPHIC_TLDS);
-		foreach (self::GENERIC_TLDS as $genericTld) {
-			foreach (self::GEOGRAPHIC_TLDS as $geoTld) {
-				$popularTlds[] = $genericTld . "." . $geoTld;
-			}
-		}
+    /**
+     * Cleans emails from VTEX platform.
+     * 
+     * Removes VTEX suffixes (e.g., user@gmail.com-123b.ct.vtex.com.br → user@gmail.com)
+     * and rejects VTEX hash emails (e.g., 6f62ac8dfa6549b8b8907ed34dfbdb79@ct.vtex.com.br).
+     * 
+     * @param string $email The email to clean
+     * @return string|false The cleaned email or false if invalid VTEX hash
+     */
+    protected function cleanVtexEmail($email)
+    {
+        if (stripos($email, '.ct.vtex.com') === false) {
+            return $email;
+        }
 
-		return $popularTlds;
-	}
+        if (preg_match('/^[a-f0-9]{20,}@ct\.vtex\.com\.br$/i', $email)) {
+            return false;
+        }
 
+        $dashPos = strpos($email, '-');
+        if ($dashPos !== false) {
+            return substr($email, 0, $dashPos);
+        }
+
+        if (preg_match('/^[a-f0-9]{20,}@ct\.vtex\.com\.br$/i', $email)) {
+            return false;
+        }
+
+        return $email;
+    }
+
+    /**
+     * Builds a list of popular TLDs by combining generic and geographic ones.
+     * 
+     * Generates combinations like: com.ar, net.es, org.co, etc.
+     * 
+     * @return array List of popular TLDs
+     */
+    protected function buildPopularTlds()
+    {
+        $popularTlds = array_merge(self::GENERIC_TLDS, self::GEOGRAPHIC_TLDS);
+        foreach (self::GENERIC_TLDS as $genericTld) {
+            foreach (self::GEOGRAPHIC_TLDS as $geoTld) {
+                $popularTlds[] = $genericTld . "." . $geoTld;
+            }
+        }
+
+        return $popularTlds;
+    }
+
+    /**
+     * Extracts user and domain parts from an email.
+     * 
+     * Detects Gmail typos (gmial, gamil, etc.) and normalizes to @gmail.com.
+     * Rejects emails with mixed domains (e.g., gmailhotmail.com).
+     * Results stored in $this->emailUser and $this->emailDomain.
+     * 
+     * @param string $email The email to extract parts from
+     * @return void
+     */
     protected function extractEmailParts(string $email): void
     {
         $email = trim($email);
@@ -140,16 +206,11 @@ class EmailCleanser
         $lowerEmail = mb_strtolower($email);
         $atPos = strpos($email, '@');
 
-        // Si hay @, extraemos la parte del dominio
         $domainPart = ($atPos !== false) ? substr($lowerEmail, $atPos) : $lowerEmail;
 
-        // 1) Verificar si hay múltiples dominios conocidos mezclados
-        // Si detectamos Gmail + otro dominio conocido, no corregimos (dejamos tal cual)
-        // Esto evita casos como: valentina@gmailhotmail.com, valentiana@yahoogmail.com, etc.
         $foundGmail = false;
         $foundOtherDomain = false;
 
-        // Buscar Gmail (o variantes)
         foreach (self::GMAIL_DOMAINS as $gmailDomain) {
             if (strpos($domainPart, $gmailDomain) !== false) {
                 $foundGmail = true;
@@ -157,7 +218,6 @@ class EmailCleanser
             }
         }
 
-        // Buscar otros dominios conocidos
         if ($foundGmail) {
             foreach (self::KNOWN_DOMAINS as $knownDomain) {
                 if (strpos($domainPart, $knownDomain) !== false) {
@@ -167,28 +227,18 @@ class EmailCleanser
             }
         }
 
-        // Si hay Gmail Y otro dominio conocido mezclados, dejarlo tal cual
         if ($foundGmail && $foundOtherDomain) {
-            if ($atPos !== false) {
-                $this->emailUser   = substr($email, 0, $atPos);
-                $this->emailDomain = substr($email, $atPos);
-            } else {
-                $this->emailUser   = null;
-                $this->emailDomain = null;
-            }
+            $this->emailUser   = null;
+            $this->emailDomain = null;
             return;
         }
 
-        // 2) Intentamos detectar dominios de Gmail mal escritos o variantes
-        // Solo si NO hay otros dominios mezclados
         foreach (self::GMAIL_DOMAINS as $knownDomain) {
             $pos = strpos($lowerEmail, $knownDomain);
             if ($pos !== false) {
                 if ($atPos !== false && $atPos < $pos) {
-                    // Caso típico: usuario@gmial.com, usuario@gmail.com.com, etc.
                     $this->emailUser = substr($email, 0, $atPos);
                 } else {
-                    // Caso sin @ pero con "gmail"/typo en el string: usuariogmial.com, usuario gmail com
                     $this->emailUser = substr($email, 0, $pos);
                 }
 
@@ -197,26 +247,38 @@ class EmailCleanser
             }
         }
 
-        // 3) Si no es Gmail ni variante, usamos el @ "normal" si existe
         if ($atPos !== false) {
             $this->emailUser   = substr($email, 0, $atPos);
             $this->emailDomain = substr($email, $atPos);
             return;
         }
 
-        // 4) Si no encontramos nada reconocible, marcamos como inválido
         $this->emailUser   = null;
         $this->emailDomain = null;
     }
 
+    /**
+     * Gets the user part of the extracted email.
+     * 
+     * Only available after calling sanitize() or extractEmailParts().
+     * 
+     * @return string|null The user part or null if extraction failed
+     */
     public function getEmailUser(): ?string
     {
         return $this->emailUser;
     }
 
+    /**
+     * Gets the domain part of the extracted email.
+     * 
+     * Only available after calling sanitize() or extractEmailParts().
+     * For normalized Gmail emails, always returns '@gmail.com'.
+     * 
+     * @return string|null The domain part (including @) or null if extraction failed
+     */
     public function getEmailDomain(): ?string
     {
         return $this->emailDomain;
     }
-
 }
