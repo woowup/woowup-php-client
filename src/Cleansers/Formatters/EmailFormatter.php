@@ -7,6 +7,7 @@ use WoowUp\Cleansers\CharacterCleanser;
 class
 EmailFormatter
 {
+    const INVALID_EMAIL = 'noemail@noemail.com';
 
     /**
      * @var CharacterCleanser
@@ -29,7 +30,7 @@ EmailFormatter
     public function clean(string $email): string
     {
         if ($this->hasInvalidSpanishChars($email)) {
-            return 'noemail@noemail.com';
+            return self::INVALID_EMAIL;
         }
 
         $email = $this->characterCleanser->removeAccents($email);
