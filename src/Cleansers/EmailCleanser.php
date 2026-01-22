@@ -145,8 +145,9 @@ class EmailCleanser
         }
 
         $lowerEmail = mb_strtolower($email);
+        $domainPart = $this->getDomainPart($lowerEmail);
 
-        if ($this->hasMixedDomains($lowerEmail)) {
+        if ($this->hasMixedDomains($domainPart)) {
             $this->resetEmailParts();
             return;
         }
@@ -259,33 +260,44 @@ class EmailCleanser
     }
 
     /**
-     * Checks if email contains mixed domains (Gmail + another provider).
+     * Returns the domain part of an email (from @ onwards), or full string if no @.
+     * Used for mixed-domain detection so we only match in the domain, not the user part
+     * (e.g. "almacentqv@gmail.com" must not match "mac" in "almacen").
      */
-    private function hasMixedDomains(string $lowerEmail): bool
+    private function getDomainPart(string $lowerEmail): string
     {
-        $hasGmail = $this->containsGmailDomain($lowerEmail);
+        $atPos = strrpos($lowerEmail, '@');
+        return $atPos !== false ? substr($lowerEmail, $atPos) : $lowerEmail;
+    }
+
+    /**
+     * Checks if the domain part contains mixed domains (Gmail + another provider).
+     */
+    private function hasMixedDomains(string $domainPart): bool
+    {
+        $hasGmail = $this->containsGmailDomain($domainPart);
 
         if (!$hasGmail) {
             return false;
         }
 
-        return $this->containsOtherKnownDomain($lowerEmail);
+        return $this->containsOtherKnownDomain($domainPart);
     }
 
-    private function containsGmailDomain(string $lowerEmail): bool
+    private function containsGmailDomain(string $domainPart): bool
     {
         foreach (self::GMAIL_DOMAINS as $gmailDomain) {
-            if (strpos($lowerEmail, $gmailDomain) !== false) {
+            if (strpos($domainPart, $gmailDomain) !== false) {
                 return true;
             }
         }
         return false;
     }
 
-    private function containsOtherKnownDomain(string $lowerEmail): bool
+    private function containsOtherKnownDomain(string $domainPart): bool
     {
         foreach (self::KNOWN_DOMAINS as $knownDomain) {
-            if (strpos($lowerEmail, $knownDomain) !== false) {
+            if (strpos($domainPart, $knownDomain) !== false) {
                 return true;
             }
         }
