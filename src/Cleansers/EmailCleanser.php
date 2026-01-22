@@ -8,6 +8,16 @@ use WoowUp\Cleansers\Validators\LengthValidator;
 use WoowUp\Cleansers\Validators\RepeatedValidator;
 use WoowUp\Cleansers\Validators\SequenceValidator;
 
+/**
+ * Email sanitizer and validator
+ *
+ * Process flow:
+ * 1. Type validation and normalization
+ * 2. Clean VTEX platform emails
+ * 3. Extract and validate email parts (user and domain)
+ * 4. Apply Gmail-specific cleaning for Gmail domains
+ * 5. Return sanitized email or false if invalid
+ */
 class EmailCleanser
 {
     const GENERIC_TLDS    = ["com", "net", "org", "info", "edu", "gov", "mil"];

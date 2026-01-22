@@ -2,7 +2,6 @@
 namespace WoowUp\Cleansers;
 
 use WoowUp\Cleansers\Telephone\TelephoneFormatter;
-use WoowUp\Cleansers\Validators\ConsecutiveDigitsValidator;
 use WoowUp\Cleansers\Validators\GenericPhoneValidator;
 use WoowUp\Cleansers\Validators\LengthValidator;
 use WoowUp\Cleansers\Validators\NumericValidator;
@@ -33,7 +32,6 @@ class TelephoneCleanser
             new NumericValidator(),
             new LengthValidator(8, 15),
             new RepeatedValidator(5, true),
-            new ConsecutiveDigitsValidator(),
             new SequenceValidator(8, true),
             new GenericPhoneValidator(),
         ];

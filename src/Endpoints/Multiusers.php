@@ -33,8 +33,6 @@ class Multiusers extends Endpoint
 
     public function update($user)
     {
-        $user = $this->cleanTelephone($user);
-        $user = $this->cleanEmail($user);
         $response = $this->put($this->host . '/multiusers', $user);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -42,8 +40,6 @@ class Multiusers extends Endpoint
 
     public function updateAsync($user) // returns promise
     {
-        $user = $this->cleanTelephone($user);
-        $user = $this->cleanEmail($user);
         return $this->putAsync($this->host.'/multiusers', $user);
     }
 
