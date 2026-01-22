@@ -1,7 +1,7 @@
 <?php
 namespace WoowUp\Cleansers;
 
-use WoowUp\Cleansers\Telephone\TelephoneFormatter;
+use WoowUp\Cleansers\Formatters\TelephoneFormatter;
 use WoowUp\Cleansers\Validators\GenericPhoneValidator;
 use WoowUp\Cleansers\Validators\LengthValidator;
 use WoowUp\Cleansers\Validators\NumericValidator;
