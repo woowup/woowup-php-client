@@ -30,6 +30,11 @@ class DataCleanser
     public $email;
 
     /**
+     * @var GenderCleanser Gender field cleanser
+     */
+    public $gender;
+
+    /**
      * Initialize all cleansers
      *
      * Creates instances of all specialized cleanser classes
@@ -40,5 +45,6 @@ class DataCleanser
         $this->telephone = new TelephoneCleanser();
         $this->tags = new TagsCleanser();
         $this->email = new EmailCleanser();
+        $this->gender = new GenderCleanser();
     }
 }
