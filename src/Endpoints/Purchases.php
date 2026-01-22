@@ -103,6 +103,21 @@ class Purchases extends Endpoint
 
         return $data;
     }
-}
 
-?>
+    protected function cleanEmail($data)
+    {
+        $originalEmail = $data['email'] ?? null;
+
+        if (!$originalEmail) {
+            return $data;
+        }
+
+        $sanitizedEmail = $this->cleanser->email->sanitize($originalEmail);
+
+        if ($sanitizedEmail !== false) {
+            $data['email'] = $sanitizedEmail;
+        }
+
+        return $data;
+    }
+}

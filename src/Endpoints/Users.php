@@ -6,6 +6,13 @@ namespace WoowUp\Endpoints;
  */
 class Users extends Endpoint
 {
+    protected const TELEPHONE_CLEANED = 'telephone_cleaned';
+    protected const TELEPHONE_REJECTED = 'telephone_rejected';
+    protected const TELEPHONE_VALIDATED = 'telephone_validated';
+    protected const EMAIL_CLEANED = 'email_cleaned';
+    protected const EMAIL_REJECTED = 'email_rejected';
+    protected const EMAIL_VALIDATED = 'email_validated';
+
     public function __construct($host, $apikey)
     {
         parent::__construct($host, $apikey);
@@ -15,12 +22,14 @@ class Users extends Endpoint
             [
                 'path' => ['street'],
                 'callable' => fn($v) => $this->cleanser->street->truncate($v),
-            ]
+            ],
         ];
     }
 
     public function update($serviceUid, $user)
     {
+        $user = $this->cleanTelephone($user);
+        $user = $this->cleanEmail($user);
         $response = $this->put($this->host . '/users/' . $this->encode($serviceUid), $user);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -33,6 +42,8 @@ class Users extends Endpoint
 
     public function create($user)
     {
+        $user = $this->cleanTelephone($user);
+        $user = $this->cleanEmail($user);
         $response = $this->post($this->host . '/users', $user);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -151,9 +162,9 @@ class Users extends Endpoint
         $sanitizedTelephone = $this->cleanser->telephone->sanitize($originalTelephone);
 
         if ($sanitizedTelephone === false) {
-            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_rejected');
-            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
-            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_validated');
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_REJECTED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_CLEANED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_VALIDATED);
 
             $data['whatsapp_enabled'] = 'disabled';
             $data['whatsapp_enabled_reason'] = 'other';
@@ -162,14 +173,44 @@ class Users extends Endpoint
             return $data;
         }
 
-        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_validated');
-        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_rejected');
+        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_VALIDATED);
+        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_REJECTED);
 
         if ($originalTelephone !== $sanitizedTelephone) {
             $data['telephone'] = $sanitizedTelephone;
-            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_cleaned');
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_CLEANED);
         } else {
-            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_CLEANED);
+        }
+
+        return $data;
+    }
+
+    protected function cleanEmail($data)
+    {
+        $originalEmail = $data['email'] ?? null;
+
+        if (!$originalEmail) {
+            return $data;
+        }
+
+        $sanitizedEmail = $this->cleanser->email->sanitize($originalEmail);
+
+        if ($sanitizedEmail === false) {
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_REJECTED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
+            return $data;
+        }
+
+        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
+        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_REJECTED);
+
+        if ($originalEmail !== $sanitizedEmail) {
+            $data['email'] = $sanitizedEmail;
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_CLEANED);
+        } else {
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
         }
 
         return $data;

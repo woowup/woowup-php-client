@@ -78,4 +78,18 @@ class CharacterCleanser
     {
         return trim(preg_replace('/\s+/', ' ', $input));
     }
+
+    /**
+     * Removes accents and diacritical marks from text.
+     * 
+     * Uses Unicode normalization to decompose characters and removes combining marks.
+     * 
+     * @param string $text The text to remove accents from
+     * @return string Text without accents
+     */
+    public function removeAccents(string $text): string
+    {
+        $normalized = \Normalizer::normalize($text, \Normalizer::FORM_D);
+        return preg_replace('/\p{Mn}/u', '', $normalized);
+    }
 }

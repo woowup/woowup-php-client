@@ -3,12 +3,20 @@ namespace WoowUp\Endpoints;
 
 class Multiusers extends Endpoint
 {
+    const INVALID_EMAIL = 'noemail@noemail.com';
     protected static $DEFAULT_IDENTITY = [
         'document'    => '',
         'email'       => '',
         'service_uid' => '',
         'telephone'   => '',
     ];
+
+    protected const TELEPHONE_CLEANED = 'telephone_cleaned';
+    protected const TELEPHONE_REJECTED = 'telephone_rejected';
+    protected const TELEPHONE_VALIDATED = 'telephone_validated';
+    protected const EMAIL_CLEANED = 'email_cleaned';
+    protected const EMAIL_REJECTED = 'email_rejected';
+    protected const EMAIL_VALIDATED = 'email_validated';
 
     public function __construct($host, $apikey)
     {
@@ -129,9 +137,9 @@ class Multiusers extends Endpoint
         $sanitizedTelephone = $this->cleanser->telephone->sanitize($originalTelephone);
 
         if ($sanitizedTelephone === false) {
-            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_rejected');
-            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
-            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_validated');
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_REJECTED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_CLEANED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_VALIDATED);
 
             $data['whatsapp_enabled'] = 'disabled';
             $data['whatsapp_enabled_reason'] = 'other';
@@ -140,14 +148,70 @@ class Multiusers extends Endpoint
            return $data;
         }
 
-        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_validated');
-        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_rejected');
+        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_VALIDATED);
+        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_REJECTED);
 
         if ($originalTelephone !== $sanitizedTelephone) {
             $data['telephone'] = $sanitizedTelephone;
-            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', 'telephone_cleaned');
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_CLEANED);
         } else {
-            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', 'telephone_cleaned');
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::TELEPHONE_CLEANED);
+        }
+
+        return $data;
+    }
+
+    protected function cleanEmail($data){
+
+        $originalEmail = $data['email'] ?? null;
+
+        if (!$originalEmail) {
+            return $data;
+        }
+
+
+        $sanitizedEmail = $this->cleanser->email->sanitize($originalEmail);
+
+        if ($sanitizedEmail === false || $sanitizedEmail === self::INVALID_EMAIL) {
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_REJECTED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
+
+            $data['mailing_enabled'] = 'disabled';
+            $data['mailing_enabled_reason'] = 'other';
+
+            if ($sanitizedEmail === self::INVALID_EMAIL) {
+                $localPart =
+                    ($data['document']    ?? null) ?:
+                        ($data['service_uid'] ?? null) ?:
+                            ($data['telefono']    ?? null);
+
+                $data['email'] = $localPart
+                    ? $localPart . '@noemail.com'
+                    : $sanitizedEmail;
+            }
+
+            return $data;
+        }
+
+        $emailDomain = $this->cleanser->email->getEmailDomain();
+        $isGmail = ($emailDomain === '@gmail.com');
+
+        if (!$isGmail) {
+            if ($originalEmail !== $sanitizedEmail) {
+                $data['email'] = $sanitizedEmail;
+            }
+            return $data;
+        }
+
+        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
+        $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_REJECTED);
+
+        if ($originalEmail !== $sanitizedEmail) {
+            $data['email'] = $sanitizedEmail;
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_CLEANED);
+        } else {
+            $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
         }
 
         return $data;

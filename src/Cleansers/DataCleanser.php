@@ -25,6 +25,11 @@ class DataCleanser
     public $tags;
 
     /**
+     * @var EmailCleanser Email field cleanser
+     */
+    public $email;
+
+    /**
      * Initialize all cleansers
      *
      * Creates instances of all specialized cleanser classes
@@ -34,5 +39,6 @@ class DataCleanser
         $this->street = new StreetCleanser();
         $this->telephone = new TelephoneCleanser();
         $this->tags = new TagsCleanser();
+        $this->email = new EmailCleanser();
     }
 }
