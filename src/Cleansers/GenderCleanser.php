@@ -25,7 +25,7 @@ class GenderCleanser
             return null;
         }
 
-        $value = mb_strtolower(trim((string) $gender));
+        $value = strtolower(trim((string)$gender));
 
         if (in_array($value, self::FEMALE_VALUES, true)) {
             return 'f';
