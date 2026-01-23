@@ -22,7 +22,7 @@ class GenderCleanser
     public function sanitize($gender): ?string
     {
         if ($gender === null || $gender === '') {
-            return null;
+            return "";
         }
 
         $value = strtolower(trim((string)$gender));
