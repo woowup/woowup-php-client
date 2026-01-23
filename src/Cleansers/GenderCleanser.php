@@ -35,6 +35,6 @@ class GenderCleanser
             return 'm';
         }
 
-        return null;
+        return "";
     }
 }
