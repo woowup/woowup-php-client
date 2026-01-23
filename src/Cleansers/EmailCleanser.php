@@ -32,7 +32,7 @@ class EmailCleanser
     ];
 
     const KNOWN_DOMAINS = [
-        'hotmail', 'hot', 'outlook', 'yahoo', 'live', 'msn', 'aol',
+        'hotmail', 'hot', 'outlook', 'yahoo', 'live', 'msn',
         'icloud', 'me', 'mac', 'protonmail', 'proton', 'zoho',
     ];
 
@@ -49,7 +49,7 @@ class EmailCleanser
         $this->validators = [
             new LengthValidator(6, 30),
             new RepeatedValidator(6, false),
-            new SequenceValidator(4, false),
+            new SequenceValidator(5, false),
             new GenericEmailValidator(),
         ];
         $this->emailDomain = null;
@@ -308,16 +308,30 @@ class EmailCleanser
      * Extracts Gmail email parts with typo correction.
      * Removes extra @ symbols from user part.
      * Returns true if Gmail domain was found and extracted.
+     *
+     * Only searches for Gmail variants in the domain part (after @) to avoid
+     * false positives like "gmelano@imagine.com.ar" being detected as Gmail.
      */
     private function extractGmailParts(string $email, string $lowerEmail): bool
     {
         foreach (self::GMAIL_DOMAINS as $gmailVariant) {
-            $pos = strpos($lowerEmail, $gmailVariant);
+            // Primero buscar con @ (ej: @gmail, @gmel)
+            $pattern = '@' . $gmailVariant;
+            $pos = strpos($lowerEmail, $pattern);
 
             if ($pos !== false) {
-                // Extract everything before the Gmail domain and remove @ symbols
                 $userPart = substr($email, 0, $pos);
                 $this->emailUser = str_replace('@', '', $userPart);
+                $this->emailDomain = '@gmail.com';
+                return true;
+            }
+
+            // Si no hay @, buscar el dominio directamente (ej: gmail.com, gmel.com)
+            $patternNoAt = $gmailVariant . '.com';
+            $pos = strpos($lowerEmail, $patternNoAt);
+
+            if ($pos !== false) {
+                $this->emailUser = substr($email, 0, $pos);
                 $this->emailDomain = '@gmail.com';
                 return true;
             }
