@@ -35,6 +35,11 @@ class DataCleanser
     public $gender;
 
     /**
+     * @var BirthdateCleanser Birthdate field cleanser
+     */
+    public $birthdate;
+
+    /**
      * Initialize all cleansers
      *
      * Creates instances of all specialized cleanser classes
@@ -46,5 +51,6 @@ class DataCleanser
         $this->tags = new TagsCleanser();
         $this->email = new EmailCleanser();
         $this->gender = new GenderCleanser();
+        $this->birthdate = new BirthdateCleanser();
     }
 }

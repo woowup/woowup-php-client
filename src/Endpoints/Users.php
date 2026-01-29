@@ -27,6 +27,10 @@ class Users extends Endpoint
                 'path' => ['gender'],
                 'callable' => fn($v) => $this->cleanser->gender->sanitize($v),
             ],
+            [
+                'path' => ['birthdate'],
+                'callable' => fn($v) => $this->cleanser->birthdate->sanitize($v),
+            ],
         ];
     }
 
