@@ -33,7 +33,7 @@ class EmailCleanser
 
     const KNOWN_DOMAINS = [
         'hotmail', 'hot', 'outlook', 'yahoo', 'live', 'msn',
-        'icloud', 'me', 'mac', 'protonmail', 'proton', 'zoho',
+        'icloud', 'mac', 'protonmail', 'proton', 'zoho',
     ];
 
     const INVALID_EMAIL = 'noemail@noemail.com';
@@ -49,7 +49,7 @@ class EmailCleanser
         $this->validators = [
             new LengthValidator(6, 30),
             new RepeatedValidator(6, false),
-            new SequenceValidator(5, false),
+            new SequenceValidator(7, 6, false),
             new GenericEmailValidator(),
         ];
         $this->emailDomain = null;
@@ -104,12 +104,14 @@ class EmailCleanser
      */
     protected function cleanVtexEmail($email)
     {
-        if (stripos($email, '.ct.vtex.com') === false) {
-            return $email;
-        }
-
+        // Check for VTEX hash email first (xxx@ct.vtex.com.br)
         if ($this->isVtexHashEmail($email)) {
             return false;
+        }
+
+        // Check for real email with VTEX suffix (user@domain.com-xxx.ct.vtex.com.br)
+        if (stripos($email, '.ct.vtex.com') === false) {
+            return $email;
         }
 
         return $this->removeVtexSuffix($email);
