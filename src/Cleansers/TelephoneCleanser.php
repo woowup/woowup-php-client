@@ -32,7 +32,7 @@ class TelephoneCleanser
             new NumericValidator(),
             new LengthValidator(8, 15),
             new RepeatedValidator(5, true),
-            new SequenceValidator(8, true),
+            new SequenceValidator(8, 6, true),
             new GenericPhoneValidator(),
         ];
 

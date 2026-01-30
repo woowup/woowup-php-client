@@ -153,7 +153,7 @@ class Multiusers extends Endpoint
             $data['whatsapp_enabled_reason'] = 'other';
             $data['sms_enabled'] = 'disabled';
             $data['sms_enabled_reason'] = 'other';
-           return $data;
+            return $data;
         }
 
         $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::TELEPHONE_VALIDATED);
@@ -170,9 +170,7 @@ class Multiusers extends Endpoint
     }
 
     protected function cleanEmail($data){
-
         $originalEmail = $data['email'] ?? null;
-
         if (!$originalEmail) {
             return $data;
         }
@@ -212,13 +210,13 @@ class Multiusers extends Endpoint
             return $data;
         }
 
-        $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
         $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_REJECTED);
 
         if ($originalEmail !== $sanitizedEmail) {
             $data['email'] = $sanitizedEmail;
             $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_CLEANED);
         } else {
+            $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
             $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
         }
 

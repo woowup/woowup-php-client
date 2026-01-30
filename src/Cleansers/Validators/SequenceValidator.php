@@ -13,7 +13,8 @@ namespace WoowUp\Cleansers\Validators;
  */
 class SequenceValidator implements ValidatorInterface
 {
-    private int $minSequenceLength;
+    private int $minDigitSequence;
+    private int $minLetterSequence;
     private bool $digitsOnly;
 
     const KEYBOARD_ROWS = [
@@ -25,11 +26,13 @@ class SequenceValidator implements ValidatorInterface
     /**
      * Constructor.
      *
-     * @param int $minSequenceLength Minimum sequence length to reject (default: 8)
+     * @param int $minDigitSequence Minimum digit sequence length to reject (default: 7)
+     * @param int $minLetterSequence Minimum letter sequence length to reject (default: 6)
      * @param bool $digitsOnly Only validate if input is purely numeric (default: true)
      */
-    public function __construct(int $minSequenceLength = 8, bool $digitsOnly = true) {
-        $this->minSequenceLength = $minSequenceLength;
+    public function __construct(int $minDigitSequence = 7, int $minLetterSequence = 6, bool $digitsOnly = true) {
+        $this->minDigitSequence = $minDigitSequence;
+        $this->minLetterSequence = $minLetterSequence;
         $this->digitsOnly = $digitsOnly;
     }
 
@@ -98,7 +101,7 @@ class SequenceValidator implements ValidatorInterface
             if ($current === ($previous + $step + 10) % 10) {
                 $sequenceCount++;
 
-                if ($sequenceCount >= $this->minSequenceLength) {
+                if ($sequenceCount >= $this->minDigitSequence) {
                     return true;
                 }
             } else {
@@ -119,6 +122,9 @@ class SequenceValidator implements ValidatorInterface
         return $this->checkSequence($input, -1);
     }
 
+    /**
+     * Check for alphabetic sequences only (not digits).
+     */
     private function checkSequence(string $input, int $direction): bool
     {
         $input = strtolower($input);
@@ -126,12 +132,18 @@ class SequenceValidator implements ValidatorInterface
         $consecutive = 1;
 
         for ($i = 1; $i < $length; $i++) {
+            // Only check letter sequences, skip digits
+            if (!ctype_alpha($input[$i]) || !ctype_alpha($input[$i - 1])) {
+                $consecutive = 1;
+                continue;
+            }
+
             $current = ord($input[$i]);
             $previous = ord($input[$i - 1]);
 
             if ($current - $previous === $direction) {
                 $consecutive++;
-                if ($consecutive >= $this->minSequenceLength) {
+                if ($consecutive >= $this->minLetterSequence) {
                     return true;
                 }
             } else {
@@ -155,7 +167,7 @@ class SequenceValidator implements ValidatorInterface
     private function hasKeyboardSequence(string $input): bool
     {
         $input = strtolower($input);
-        $min = $this->minSequenceLength;
+        $min = $this->minLetterSequence;
 
         foreach (self::KEYBOARD_ROWS as $row) {
             // Ascendente (qwerty)
