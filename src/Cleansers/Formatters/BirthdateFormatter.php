@@ -123,6 +123,10 @@ class BirthdateFormatter
             return false;
         }
 
+        if ($this->isAfterToday($date)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -135,6 +139,17 @@ class BirthdateFormatter
     private function isBeforeMinDate(string $date): bool
     {
         return $date < self::MIN_BIRTHDATE;
+    }
+
+    /**
+     * Checks if the date is after today (future birthdate).
+     *
+     * @param string $date The formatted date (Y-m-d) to check
+     * @return bool True if the date is in the future
+     */
+    private function isAfterToday(string $date): bool
+    {
+        return $date > date(self::WOOWUP_FORMAT);
     }
 
     /**
