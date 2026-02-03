@@ -43,11 +43,11 @@ class BirthdateCleanser
     public function sanitize($birthdate): ?string
     {
         if ($birthdate instanceof DateTime) {
-            return $birthdate->format(self::WOOWUP_FORMAT);
+            return $this->formatter->format($birthdate->format(self::WOOWUP_FORMAT));
         }
 
         if ($birthdate instanceof UTCDateTime) {
-            return $birthdate->toDateTime()->format(self::WOOWUP_FORMAT);
+            return $this->formatter->format($birthdate->toDateTime()->format(self::WOOWUP_FORMAT));
         }
 
         if (!is_string($birthdate)) {

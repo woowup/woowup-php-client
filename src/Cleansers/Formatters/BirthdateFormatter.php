@@ -18,6 +18,9 @@ class BirthdateFormatter
     /** @var string WoowUp standard date format */
     private const WOOWUP_FORMAT = 'Y-m-d';
 
+    /** @var string Minimum allowed birthdate (WoowUp API requirement) */
+    private const MIN_BIRTHDATE = '1900-01-01';
+
     /**
      * Common placeholder dates used as null equivalents in legacy systems.
      *
@@ -91,17 +94,47 @@ class BirthdateFormatter
             $date = DateTime::createFromFormat($format, $dateString);
             if ($date !== false) {
                 $formatted = $date->format(self::WOOWUP_FORMAT);
-                return $this->isPlaceholderDate($formatted) ? null : $formatted;
+                return $this->isValidDate($formatted) ? $formatted : null;
             }
         }
 
         $timestamp = @strtotime($dateString);
         if ($timestamp !== false && $timestamp > 0) {
             $formatted = date(self::WOOWUP_FORMAT, $timestamp);
-            return $this->isPlaceholderDate($formatted) ? null : $formatted;
+            return $this->isValidDate($formatted) ? $formatted : null;
         }
 
         return null;
+    }
+
+    /**
+     * Validates that a formatted date is acceptable.
+     *
+     * @param string $date The formatted date (Y-m-d) to validate
+     * @return bool True if the date is valid
+     */
+    private function isValidDate(string $date): bool
+    {
+        if ($this->isPlaceholderDate($date)) {
+            return false;
+        }
+
+        if ($this->isBeforeMinDate($date)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks if the date is before the minimum allowed birthdate.
+     *
+     * @param string $date The formatted date (Y-m-d) to check
+     * @return bool True if the date is before minimum
+     */
+    private function isBeforeMinDate(string $date): bool
+    {
+        return $date < self::MIN_BIRTHDATE;
     }
 
     /**
