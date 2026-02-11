@@ -25,7 +25,7 @@ class EmailCleanser
 
     const GMAIL_DOMAINS = [
         'gmail',
-        'gamil', 'gmial', 'gmai', 'gmal', 'gnail', 'gmaul', 'gmaol', 'gmaik', 'gmaio',
+        'gamil', 'gmial', 'gmai', 'gmal', 'gnail', 'gmaul', 'gmaol', 'gmaiol', 'gmaik', 'gmaio',
         'gmeil', 'gmeel', 'gmel',
         'gmaill', 'gmil', 'ggmail', 'gmmail', 'gmailm',
         'gemail', 'gaiml', 'gail', 'gmailcom', 'gmailcomcom',
@@ -71,6 +71,8 @@ class EmailCleanser
         if ($email === false) {
             return false;
         }
+
+        $email = $this->removeDniPrefix($email);
 
         $this->extractEmailParts($email);
 
@@ -232,6 +234,23 @@ class EmailCleanser
     {
         $dashPos = strpos($email, '-');
         return $dashPos !== false ? substr($email, 0, $dashPos) : $email;
+    }
+
+    /**
+     * Removes a DNI prefix from VTEX-style emails.
+     * Pattern: {7-8 digits}-{user}@{domain}-{suffix}
+     * Example: "27204905-mariabiblio1979@gmail.com-264200337326b.c" -> "mariabiblio1979@gmail.com-264200337326b.c"
+     *
+     * Only applies when there is also a suffix after the domain (the VTEX tracking ID),
+     * to avoid false positives with legitimate emails like "12345678-user@gmail.com".
+     */
+    private function removeDniPrefix(string $email): string
+    {
+        if (preg_match('/^\d{7,8}-(.+@.+\..+-.+)$/', $email, $matches)) {
+            return $matches[1];
+        }
+
+        return $email;
     }
 
     private function resetEmailParts(): void
