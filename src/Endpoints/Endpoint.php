@@ -11,12 +11,19 @@ class Endpoint
     const HTTP_OK               = 200;
     const HTTP_CREATED          = 201;
     const HTTP_TOO_MANY_REQUEST = 429;
+    const HTTP_BAD_GATEWAY      = 502;
+    const HTTP_SERVICE_UNAVAIL  = 503;
     const HTTP_BAD_REQUEST      = 403;
     const HTTP_NOT_FOUND        = 404;
 
-    const MAX_ATTEMPTS = 5;
+    const MAX_ATTEMPTS  = 25;
+    const MAX_SLEEP_SEC = 60;
 
-    protected static $retryResponses = [self::HTTP_TOO_MANY_REQUEST];
+    protected static $retryResponses = [
+        self::HTTP_TOO_MANY_REQUEST,
+        self::HTTP_BAD_GATEWAY,
+        self::HTTP_SERVICE_UNAVAIL,
+    ];
 
     protected $host;
     protected $apikey;
@@ -29,7 +36,10 @@ class Endpoint
     {
         $this->host   = $host;
         $this->apikey = $apikey;
-        $this->http   = new \GuzzleHttp\Client();
+        $this->http   = new \GuzzleHttp\Client([
+            'connect_timeout' => 10,
+            'timeout'         => 30,
+        ]);
         $this->cleanser = new DataCleanser();
     }
 
@@ -168,8 +178,7 @@ class Endpoint
                 return $this->http->request($verb, $url, $params);
             } catch (\GuzzleHttp\Exception\RequestException $e) {
                 if ($e->hasResponse() && in_array($e->getResponse()->getStatusCode(), self::$retryResponses) && $attempts <= self::MAX_ATTEMPTS) {
-                    // sleep 1, 2, 4, 8, ... seconds
-                    sleep(pow(2, $attempts));
+                    sleep(min(pow(2, $attempts), self::MAX_SLEEP_SEC));
                     $attempts++;
                 } else {
                     throw $e;
