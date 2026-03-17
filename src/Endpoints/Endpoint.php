@@ -15,6 +15,7 @@ class Endpoint
     const HTTP_SERVICE_UNAVAIL  = 503;
     const HTTP_BAD_REQUEST      = 403;
     const HTTP_NOT_FOUND        = 404;
+    const HTTP_GONE             = 410;
 
     const MAX_ATTEMPTS  = 25;
     const MAX_SLEEP_SEC = 60;
@@ -177,12 +178,16 @@ class Endpoint
             try {
                 return $this->http->request($verb, $url, $params);
             } catch (\GuzzleHttp\Exception\RequestException $e) {
-                if ($e->hasResponse() && in_array($e->getResponse()->getStatusCode(), self::$retryResponses) && $attempts <= self::MAX_ATTEMPTS) {
-                    sleep(min(pow(2, $attempts), self::MAX_SLEEP_SEC));
-                    $attempts++;
-                } else {
+                if (!$e->hasResponse()) {
                     throw $e;
                 }
+                $response   = $e->getResponse();
+                $statusCode = $response->getStatusCode();
+                if (!in_array($statusCode, self::$retryResponses)) {
+                    throw $e;
+                }
+                sleep($this->calculateSleep($statusCode, $response, $attempts));
+                $attempts++;
             }
         }
 
@@ -191,7 +196,33 @@ class Endpoint
 
     protected function requestAsync($verb, $url, $params)
     {
-        return $this->http->requestAsync($verb, $url, $params);
+        $attempts = 0;
+        return $this->http->requestAsync($verb, $url, $params)->otherwise(
+            function ($e) use ($verb, $url, $params, $attempts) {
+                if (!$e instanceof \GuzzleHttp\Exception\RequestException || !$e->hasResponse()) {
+                    throw $e;
+                }
+                $response   = $e->getResponse();
+                $statusCode = $response->getStatusCode();
+                if (!in_array($statusCode, self::$retryResponses) || $attempts >= self::MAX_ATTEMPTS) {
+                    throw $e;
+                }
+                sleep($this->calculateSleep($statusCode, $response, $attempts));
+                return $this->requestAsync($verb, $url, $params);
+            }
+        );
+    }
+
+    private function calculateSleep(int $statusCode, $response, int $attempts): int
+    {
+        if ($statusCode === self::HTTP_TOO_MANY_REQUEST) {
+            $retryAfter = (int) $response->getHeaderLine('Retry-After');
+            if ($retryAfter > 0) {
+                return min($retryAfter, self::MAX_SLEEP_SEC);
+            }
+        }
+
+        return (int) min(pow(2, $attempts), self::MAX_SLEEP_SEC);
     }
 
     protected function encode($string)
