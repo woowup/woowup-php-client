@@ -10,11 +10,12 @@ class Endpoint
 {
     const HTTP_OK               = 200;
     const HTTP_CREATED          = 201;
+    const HTTP_BAD_REQUEST      = 403;
+    const HTTP_NOT_FOUND        = 404;
+    const HTTP_GONE             = 410;
     const HTTP_TOO_MANY_REQUEST = 429;
     const HTTP_BAD_GATEWAY      = 502;
     const HTTP_SERVICE_UNAVAIL  = 503;
-    const HTTP_BAD_REQUEST      = 403;
-    const HTTP_NOT_FOUND        = 404;
 
     const MAX_ATTEMPTS  = 25;
     const MAX_SLEEP_SEC = 60;
@@ -173,16 +174,15 @@ class Endpoint
     protected function request($verb, $url, $params)
     {
         $attempts = 0;
+
         while ($attempts < self::MAX_ATTEMPTS) {
             try {
                 return $this->http->request($verb, $url, $params);
             } catch (\GuzzleHttp\Exception\RequestException $e) {
-                if ($e->hasResponse() && in_array($e->getResponse()->getStatusCode(), self::$retryResponses) && $attempts <= self::MAX_ATTEMPTS) {
-                    sleep(min(pow(2, $attempts), self::MAX_SLEEP_SEC));
-                    $attempts++;
-                } else {
-                    throw $e;
-                }
+                $this->assertRetryable($e, $attempts);
+
+                sleep($this->calculateSleep($e->getResponse(), $attempts));
+                $attempts++;
             }
         }
 
@@ -191,7 +191,53 @@ class Endpoint
 
     protected function requestAsync($verb, $url, $params)
     {
-        return $this->http->requestAsync($verb, $url, $params);
+        $attempts = 0;
+
+        $retry = function ($e) use ($verb, $url, $params, &$attempts, &$retry) {
+            $this->assertRetryable($e, $attempts);
+
+            sleep($this->calculateSleep($e->getResponse(), $attempts));
+            $attempts++;
+
+            return $this->http->requestAsync($verb, $url, $params)->otherwise($retry);
+        };
+
+        return $this->http->requestAsync($verb, $url, $params)->otherwise($retry);
+    }
+
+    /**
+     * @param \Exception $e
+     * @param int        $attempts
+     * @throws \Exception
+     */
+    private function assertRetryable($e, $attempts)
+    {
+        if (!$e instanceof \GuzzleHttp\Exception\RequestException || !$e->hasResponse()) {
+            throw $e;
+        }
+
+        $statusCode = $e->getResponse()->getStatusCode();
+
+        if (!in_array($statusCode, self::$retryResponses) || $attempts >= self::MAX_ATTEMPTS) {
+            throw $e;
+        }
+    }
+
+    /**
+     * @param \Psr\Http\Message\ResponseInterface $response
+     * @param int                                  $attempts
+     * @return int
+     */
+    private function calculateSleep($response, $attempts)
+    {
+        if ($response->getStatusCode() === self::HTTP_TOO_MANY_REQUEST) {
+            $retryAfter = (int) $response->getHeaderLine('Retry-After');
+            if ($retryAfter > 0) {
+                return $retryAfter;
+            }
+        }
+
+        return min((int) pow(2, $attempts), self::MAX_SLEEP_SEC);
     }
 
     protected function encode($string)
