@@ -221,6 +221,12 @@ class Endpoint
         if (!in_array($statusCode, self::$retryResponses) || $attempts >= self::MAX_ATTEMPTS) {
             throw $e;
         }
+
+        if ($attempts === self::MAX_ATTEMPTS - 1) {
+            error_log('[ERROR] [WoowupClient] HTTP ' . $statusCode . ' on attempt ' . ($attempts + 1) . '/' . self::MAX_ATTEMPTS . '. Max attempts reached.');
+        } else {
+            error_log('[WARNING] [WoowupClient] HTTP ' . $statusCode . ' on attempt ' . ($attempts + 1) . '/' . self::MAX_ATTEMPTS . '. Retrying...');
+        }
     }
 
     /**
