@@ -43,6 +43,7 @@ class GenericEmailValidator implements ValidatorInterface
         'email',
         'nocuenta',
         'sinmail',
+        'sinnombre',
         'noposee',
         'notengo',
         'noreply',
