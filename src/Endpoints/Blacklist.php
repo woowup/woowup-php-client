@@ -9,9 +9,9 @@ class Blacklist extends Endpoint
     const ACTION_CREATE        = 'create';
     const ACTION_DELETE_CREATE = 'delete-create';
 
-    public function __construct($host, $apikey)
+    public function __construct($host, $apikey, \GuzzleHttp\ClientInterface $http = null)
     {
-        parent::__construct($host, $apikey);
+        parent::__construct($host, $apikey, $http);
     }
 
     public function create($file, $type)
