@@ -18,9 +18,9 @@ class Multiusers extends Endpoint
     protected const EMAIL_REJECTED = 'email_rejected';
     protected const EMAIL_VALIDATED = 'email_validated';
 
-    public function __construct($host, $apikey)
+    public function __construct($host, $apikey, \GuzzleHttp\ClientInterface $http = null)
     {
-        parent::__construct($host, $apikey);
+        parent::__construct($host, $apikey, $http);
 
         $this->enableSanitization = true;
         $this->sanitizationCallables = [

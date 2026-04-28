@@ -102,22 +102,22 @@ class Client
      * @param string $host   WoowUp API host
      * @param string $version   WoowUp API version
      */
-    public function __construct($apikey, $host = 'https://api.woowup.com', $version = 'apiv3')
+    public function __construct($apikey, $host = 'https://api.woowup.com', $version = 'apiv3', \GuzzleHttp\ClientInterface $http = null)
     {
         $url = $host . '/' . $version;
 
-        $this->purchases      = new Purchases($url, $apikey);
-        $this->users          = new Users($url, $apikey);
-        $this->products       = new Products($url, $apikey);
-        $this->abandonedCarts = new AbandonedCarts($url, $apikey);
-        $this->events         = new Events($url, $apikey);
-        $this->userEvents     = new UserEvents($url, $apikey);
-        $this->branches       = new Branches($url, $apikey);
-        $this->account        = new Account($url, $apikey);
-        $this->multiusers     = new Multiusers($url, $apikey);
-        $this->blacklist      = new Blacklist($url, $apikey);
-        $this->stats          = new Stats($url, $apikey);
-        $this->banks          = new Banks($url, $apikey);
-        $this->customAttributes = new CustomAttributes($url, $apikey);
+        $this->purchases        = new Purchases($url, $apikey, $http);
+        $this->users            = new Users($url, $apikey, $http);
+        $this->products         = new Products($url, $apikey, $http);
+        $this->abandonedCarts   = new AbandonedCarts($url, $apikey, $http);
+        $this->events           = new Events($url, $apikey, $http);
+        $this->userEvents       = new UserEvents($url, $apikey, $http);
+        $this->branches         = new Branches($url, $apikey, $http);
+        $this->account          = new Account($url, $apikey, $http);
+        $this->multiusers       = new Multiusers($url, $apikey, $http);
+        $this->blacklist        = new Blacklist($url, $apikey, $http);
+        $this->stats            = new Stats($url, $apikey, $http);
+        $this->banks            = new Banks($url, $apikey, $http);
+        $this->customAttributes = new CustomAttributes($url, $apikey, $http);
     }
 }

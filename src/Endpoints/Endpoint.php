@@ -29,15 +29,25 @@ class Endpoint
     protected $host;
     protected $apikey;
     protected $http;
+
+    private static $requestCounts  = [];
+    private static $throttleCounts = [];
+
+    public static function getRequestCount(): int   { return array_sum(self::$requestCounts); }
+    public static function getRequestCounts(): array { return self::$requestCounts; }
+    public static function resetRequestCount(): void { self::$requestCounts = []; }
+
+    public static function getThrottleCounts(): array { return self::$throttleCounts; }
+    public static function resetThrottleCount(): void  { self::$throttleCounts = []; }
     protected $cleanser;
     protected $enableSanitization = false;
     protected $sanitizationCallables = [];
 
-    public function __construct($host, $apikey)
+    public function __construct($host, $apikey, \GuzzleHttp\ClientInterface $http = null)
     {
         $this->host   = $host;
         $this->apikey = $apikey;
-        $this->http   = new \GuzzleHttp\Client([
+        $this->http   = $http ?: new \GuzzleHttp\Client([
             'connect_timeout' => 10,
             'timeout'         => 30,
         ]);
@@ -173,6 +183,8 @@ class Endpoint
 
     protected function request($verb, $url, $params)
     {
+        $class = static::class;
+        self::$requestCounts[$class] = (self::$requestCounts[$class] ?? 0) + 1;
         $attempts = 0;
 
         while ($attempts < self::MAX_ATTEMPTS) {
@@ -180,6 +192,10 @@ class Endpoint
                 return $this->http->request($verb, $url, $params);
             } catch (\GuzzleHttp\Exception\RequestException $e) {
                 $this->assertRetryable($e, $attempts);
+
+                if ($e->hasResponse() && $e->getResponse()->getStatusCode() === self::HTTP_TOO_MANY_REQUEST) {
+                    self::$throttleCounts[$class] = (self::$throttleCounts[$class] ?? 0) + 1;
+                }
 
                 sleep($this->calculateSleep($e->getResponse(), $attempts));
                 $attempts++;
