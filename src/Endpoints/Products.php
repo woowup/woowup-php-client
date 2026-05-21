@@ -46,6 +46,7 @@ class Products extends Endpoint
 
     public function create($product)
     {
+        $product  = $this->normalizeCustomAttributeKeys($product);
         $response = $this->post($this->host . '/products', $product);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -53,11 +54,13 @@ class Products extends Endpoint
 
     public function createAsync($product) // returns promise
     {
+        $product = $this->normalizeCustomAttributeKeys($product);
         return $this->postAsync($this->host.'/products', $product);
     }
 
     public function update($sku, $product)
     {
+        $product  = $this->normalizeCustomAttributeKeys($product);
         $response = $this->put($this->host . '/products/' . $this->encode($sku), $product);
 
         if ($response->getStatusCode() == Endpoint::HTTP_OK) {
@@ -71,7 +74,19 @@ class Products extends Endpoint
 
     public function updateAsync($sku, $product) // returns promise
     {
+        $product = $this->normalizeCustomAttributeKeys($product);
         return $this->putAsync($this->host.'/products/'.$this->encode($sku), $product);
+    }
+
+    private function normalizeCustomAttributeKeys(array $product): array
+    {
+        if (empty($product['custom_attributes']) || !is_array($product['custom_attributes'])) {
+            return $product;
+        }
+
+        $product['custom_attributes'] = $this->cleanser->customAttributes->normalizeKeys($product['custom_attributes']);
+
+        return $product;
     }
 
     public function search($search = [], $page = 0, $limit = 100)
