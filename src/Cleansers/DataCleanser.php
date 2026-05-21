@@ -40,6 +40,11 @@ class DataCleanser
     public $birthdate;
 
     /**
+     * @var CustomAttributeCleanser Custom attribute name cleanser
+     */
+    public $customAttributes;
+
+    /**
      * Initialize all cleansers
      *
      * Creates instances of all specialized cleanser classes
@@ -52,5 +57,6 @@ class DataCleanser
         $this->email = new EmailCleanser();
         $this->gender = new GenderCleanser();
         $this->birthdate = new BirthdateCleanser();
+        $this->customAttributes = new CustomAttributeCleanser();
     }
 }
