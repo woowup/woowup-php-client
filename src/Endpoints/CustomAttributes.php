@@ -31,9 +31,10 @@ class CustomAttributes extends Endpoint
         return false;
     }
 
-    public function updateAttributeDefinition($data, $entity)
+    public function updateAttributeDefinition($data, $entity, string $oldName = null)
     {
-    	$response = $this->put($this->host . '/account/' . self::ENTITYS[$entity] . '/' . $data->name, $data);
+        $urlName = $oldName ?? $data->name;
+    	$response = $this->put($this->host . '/account/' . self::ENTITYS[$entity] . '/' . $urlName, $data);
 
     	return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
 
