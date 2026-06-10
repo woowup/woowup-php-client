@@ -36,7 +36,6 @@ class Users extends Endpoint
 
     public function update($serviceUid, $user)
     {
-        $user = $this->cleanTelephone($user);
         $response = $this->put($this->host . '/users/' . $this->encode($serviceUid), $user);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
@@ -49,7 +48,6 @@ class Users extends Endpoint
 
     public function create($user)
     {
-        $user = $this->cleanTelephone($user);
         $response = $this->post($this->host . '/users', $user);
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
