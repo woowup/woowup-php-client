@@ -3,6 +3,7 @@
 namespace WoowUp\Cleansers;
 
 use WoowUp\Cleansers\Formatters\EmailFormatter;
+use WoowUp\Cleansers\Tld\TldCorrector;
 use WoowUp\Cleansers\Validators\GenericEmailValidator;
 use WoowUp\Cleansers\Validators\LengthValidator;
 use WoowUp\Cleansers\Validators\RepeatedValidator;
@@ -42,8 +43,10 @@ class EmailCleanser
     private $validators;
     private $emailUser;
     private $emailDomain;
+    private ?TldCorrector $tldCorrector;
+    private bool $tldWasCorrected = false;
 
-    public function __construct()
+    public function __construct(?TldCorrector $tldCorrector = null)
     {
         $this->formatter = new EmailFormatter();
         $this->validators = [
@@ -52,8 +55,14 @@ class EmailCleanser
             new SequenceValidator(7, 6, false),
             new GenericEmailValidator(),
         ];
-        $this->emailDomain = null;
-        $this->emailUser   = null;
+        $this->emailDomain    = null;
+        $this->emailUser      = null;
+        $this->tldCorrector   = $tldCorrector;
+    }
+
+    public function wasTldCorrected(): bool
+    {
+        return $this->tldWasCorrected;
     }
 
     /**
@@ -61,6 +70,8 @@ class EmailCleanser
      */
     public function sanitize($email)
     {
+        $this->tldWasCorrected = false;
+
         if (!$this->isValidInput($email)) {
             return false;
         }
@@ -80,9 +91,20 @@ class EmailCleanser
             return false;
         }
 
+        if ($this->tldCorrector !== null && !$this->isGmailDomain()) {
+            $result = $this->tldCorrector->correct($this->emailDomain);
+            if ($result->isIrrecoverable) {
+                return false;
+            }
+            if ($result->wasCorrected) {
+                $this->emailDomain    = $result->correctedDomain;
+                $this->tldWasCorrected = true;
+            }
+        }
+
         return $this->isGmailDomain()
             ? $this->sanitizeGmailEmail()
-            : $this->prettify($email);
+            : $this->prettify($this->emailUser . $this->emailDomain);
     }
 
     /**

@@ -206,6 +206,10 @@ class Multiusers extends Endpoint
         if (!$isGmail) {
             if ($originalEmail !== $sanitizedEmail) {
                 $data['email'] = $sanitizedEmail;
+                if ($this->cleanser->email->wasTldCorrected()) {
+                    $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_CLEANED);
+                    $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_REJECTED);
+                }
             }
             return $data;
         }

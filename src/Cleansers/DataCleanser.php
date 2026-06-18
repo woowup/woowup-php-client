@@ -1,6 +1,8 @@
 <?php
 namespace WoowUp\Cleansers;
 
+use WoowUp\Cleansers\Tld\TldCorrector;
+
 /**
  * DataCleanser
  *
@@ -44,6 +46,22 @@ class DataCleanser
      */
     public $customAttributes;
 
+    private static ?TldCorrector $globalTldCorrector = null;
+
+    /**
+     * Configure a TldCorrector that will be used by all DataCleanser instances created afterwards.
+     * Call once at application startup (e.g. from a feature-flag check in the Pimple provider).
+     */
+    public static function configureGlobalTldCorrector(TldCorrector $corrector): void
+    {
+        self::$globalTldCorrector = $corrector;
+    }
+
+    public function setTldCorrector(TldCorrector $corrector): void
+    {
+        $this->email = new EmailCleanser($corrector);
+    }
+
     /**
      * Initialize all cleansers
      *
@@ -54,7 +72,7 @@ class DataCleanser
         $this->street = new StreetCleanser();
         $this->telephone = new TelephoneCleanser();
         $this->tags = new TagsCleanser();
-        $this->email = new EmailCleanser();
+        $this->email = new EmailCleanser(self::$globalTldCorrector);
         $this->gender = new GenderCleanser();
         $this->birthdate = new BirthdateCleanser();
         $this->customAttributes = new CustomAttributeCleanser();
