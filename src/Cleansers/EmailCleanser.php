@@ -43,8 +43,10 @@ class EmailCleanser
     private $validators;
     private $emailUser;
     private $emailDomain;
-    private ?TldCorrector $tldCorrector;
-    private bool $tldWasCorrected = false;
+    /** @var TldCorrector|null */
+    private $tldCorrector;
+    /** @var bool */
+    private $tldWasCorrected = false;
 
     public function __construct(?TldCorrector $tldCorrector = null)
     {

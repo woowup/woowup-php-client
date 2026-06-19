@@ -4,11 +4,14 @@ namespace WoowUp\Cleansers\Tld;
 
 class TldCorrectionResult
 {
-    public bool $wasCorrected;
-    public bool $isIrrecoverable;
-    public ?string $correctedDomain;
+    /** @var bool */
+    public $wasCorrected;
+    /** @var bool */
+    public $isIrrecoverable;
+    /** @var string|null */
+    public $correctedDomain;
 
-    private function __construct(bool $wasCorrected, bool $isIrrecoverable, ?string $correctedDomain)
+    private function __construct($wasCorrected, $isIrrecoverable, $correctedDomain)
     {
         $this->wasCorrected     = $wasCorrected;
         $this->isIrrecoverable  = $isIrrecoverable;

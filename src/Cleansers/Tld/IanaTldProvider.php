@@ -13,9 +13,12 @@ class IanaTldProvider
         'jp', 'cn', 'in', 'kr', 'io', 'lat', 'tv', 'info', 'biz', 'name', 'mobi', 'tel', 'pro',
     ];
 
-    private string $cacheFile;
-    private int    $ttl;
-    private ?array $tlds = null;
+    /** @var string */
+    private $cacheFile;
+    /** @var int */
+    private $ttl;
+    /** @var array|null */
+    private $tlds = null;
 
     public function __construct(string $cacheFile = '/tmp/iana_tlds.cache', int $ttl = 604800)
     {
@@ -73,7 +76,9 @@ class IanaTldProvider
             return null;
         }
 
-        @file_put_contents($this->cacheFile, json_encode($tlds));
+        $tmp = $this->cacheFile . '.tmp.' . getmypid();
+        @file_put_contents($tmp, json_encode($tlds), LOCK_EX);
+        @rename($tmp, $this->cacheFile);
         return $tlds;
     }
 

@@ -23,12 +23,18 @@ class TldCorrector
         'com', 'ar', 'es', 'net', 'org', 'br', 'io', 'co', 'lat', 'mx', 'cl', 'pe', 'uy', 'edu', 'gov',
     ];
 
-    private IanaTldProvider $iana;
-    private array $singleDomainProviders;
-    private array $multiRegionProviders;
-    private array $denylist;
-    private array $targetTlds;
-    private ?string $newSuffixLog;
+    /** @var IanaTldProvider */
+    private $iana;
+    /** @var array */
+    private $singleDomainProviders;
+    /** @var array */
+    private $multiRegionProviders;
+    /** @var array */
+    private $denylist;
+    /** @var array */
+    private $targetTlds;
+    /** @var string|null */
+    private $newSuffixLog;
 
     public function __construct(IanaTldProvider $iana, array $config = [])
     {
@@ -48,7 +54,7 @@ class TldCorrector
     {
         // Strip leading "@" for processing, restore it in the result.
         $domain = ltrim($emailDomain, '@');
-        [$name, $tld] = $this->splitAtLastDot($domain);
+        list($name, $tld) = $this->splitAtLastDot($domain);
 
         if ($tld === '') {
             return TldCorrectionResult::irrecoverable();
@@ -182,7 +188,7 @@ class TldCorrector
     {
         // Try longest matching prefix first to prefer "com.ar" over "com" for "comar".
         $candidates = $this->targetTlds;
-        usort($candidates, fn($a, $b) => strlen($b) - strlen($a));
+        usort($candidates, function ($a, $b) { return strlen($b) - strlen($a); });
 
         foreach ($candidates as $target) {
             if (strpos($tld, $target) === 0) {

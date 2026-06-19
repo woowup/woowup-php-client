@@ -46,7 +46,8 @@ class DataCleanser
      */
     public $customAttributes;
 
-    private static ?TldCorrector $globalTldCorrector = null;
+    /** @var TldCorrector|null */
+    private static $globalTldCorrector = null;
 
     /**
      * Configure a TldCorrector that will be used by all DataCleanser instances created afterwards.
