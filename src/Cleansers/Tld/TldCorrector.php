@@ -113,7 +113,12 @@ class TldCorrector
     private function correctMultiRegionDomain(string $name, string $tld): TldCorrectionResult
     {
         if ($this->iana->isValid($tld)) {
-            if (in_array($tld, $this->denylist, true)) {
+            // Denylist only applies to a bare suffix (yahoo.co), never to a legitimate
+            // two-level regional suffix (yahoo.com.co) — otherwise "yahoo.com.co" would
+            // be corrected to "yahoo.com.com".
+            $firstLabel = explode('.', $name)[0];
+            $isBare = $name === $firstLabel;
+            if ($isBare && in_array($tld, $this->denylist, true)) {
                 return TldCorrectionResult::corrected('@' . $name . '.com');
             }
             $this->logNewSuffix($name, $tld);
