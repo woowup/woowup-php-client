@@ -316,26 +316,28 @@ class EmailCleanser
     }
 
     /**
-     * Checks if the domain part contains mixed domains (Gmail + another provider).
+     * Checks if the domain part contains mixed domains (Gmail + another provider),
+     * e.g. "gmailhotmail.com". Only counts a known domain found outside the matched
+     * Gmail-variant substring — otherwise a plain Gmail typo like "gmaol.com" would
+     * false-positive on "aol" (a substring of "gmaol") and get rejected instead of
+     * corrected to "@gmail.com".
      */
     private function hasMixedDomains(string $domainPart): bool
     {
-        $hasGmail = $this->containsGmailDomain($domainPart);
+        $dp = mb_strtolower($domainPart);
 
-        if (!$hasGmail) {
-            return false;
-        }
-
-        return $this->containsOtherKnownDomain($domainPart);
-    }
-
-    private function containsGmailDomain(string $domainPart): bool
-    {
         foreach (self::GMAIL_DOMAINS as $gmailDomain) {
-            if (strpos($domainPart, $gmailDomain) !== false) {
+            $pos = strpos($dp, $gmailDomain);
+            if ($pos === false) {
+                continue;
+            }
+
+            $rest = substr($dp, 0, $pos) . substr($dp, $pos + strlen($gmailDomain));
+            if ($this->containsOtherKnownDomain($rest)) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -398,6 +400,11 @@ class EmailCleanser
         }
 
         $this->emailUser = substr($email, 0, $atPos);
-        $this->emailDomain = substr($email, $atPos);
+        // Lowercased so provider detection (single/multi-region) and TLD
+        // comparisons are case-insensitive — otherwise "YAHOO.CON" never
+        // matches "yahoo" or gets its edit distance to "com" computed right.
+        // Trailing dots (e.g. "hotmail.com.") are trimmed so they don't leave
+        // an empty TLD after splitting at the last dot.
+        $this->emailDomain = rtrim(mb_strtolower(substr($email, $atPos)), '.');
     }
 }
