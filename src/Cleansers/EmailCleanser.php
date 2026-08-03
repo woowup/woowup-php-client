@@ -403,8 +403,11 @@ class EmailCleanser
         // Lowercased so provider detection (single/multi-region) and TLD
         // comparisons are case-insensitive — otherwise "YAHOO.CON" never
         // matches "yahoo" or gets its edit distance to "com" computed right.
-        // Trailing dots (e.g. "hotmail.com.") are trimmed so they don't leave
-        // an empty TLD after splitting at the last dot.
-        $this->emailDomain = rtrim(mb_strtolower(substr($email, $atPos)), '.');
+        // Consecutive dots (e.g. "hotmail..con") are collapsed to one, and a
+        // trailing dot (e.g. "hotmail.com.") is trimmed — otherwise either
+        // leaves an empty label, and a trailing one leaves an empty TLD after
+        // splitting at the last dot, making the address irrecoverable.
+        $domain = preg_replace('/\.{2,}/', '.', mb_strtolower(substr($email, $atPos)));
+        $this->emailDomain = rtrim($domain, '.');
     }
 }

@@ -27,7 +27,7 @@ class TldCorrector
     // label (gov.XX, com.XX, mil.XX, edu.XX), XX is expected to be a country code,
     // not another generic TLD — otherwise "gov.go" resolves to "gov.io" instead of
     // "gov.co", and "com.con" resolves to "com.com" instead of "com.co".
-    const TWO_LEVEL_CONTEXT_LABELS = ['com', 'net', 'org', 'edu', 'gov', 'mil'];
+    const TWO_LEVEL_CONTEXT_LABELS = ['com', 'net', 'org', 'edu', 'gov', 'mil', 'gob'];
     const DEFAULT_COUNTRY_CODE_PARTNERS = ['co', 'ar', 'es', 'br', 'mx', 'cl', 'pe', 'uy'];
 
     /** @var IanaTldProvider */
