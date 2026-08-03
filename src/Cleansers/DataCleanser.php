@@ -52,13 +52,15 @@ class DataCleanser
     /**
      * Configure a TldCorrector that will be used by all DataCleanser instances created afterwards.
      * Call once at application startup (e.g. from a feature-flag check in the Pimple provider).
+     * @return void
      */
-    public static function configureGlobalTldCorrector(TldCorrector $corrector): void
+    public static function configureGlobalTldCorrector(TldCorrector $corrector)
     {
         self::$globalTldCorrector = $corrector;
     }
 
-    public function setTldCorrector(TldCorrector $corrector): void
+    /** @return void */
+    public function setTldCorrector(TldCorrector $corrector)
     {
         $this->email = new EmailCleanser($corrector);
     }

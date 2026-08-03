@@ -48,7 +48,7 @@ class EmailCleanser
     /** @var bool */
     private $tldWasCorrected = false;
 
-    public function __construct(?TldCorrector $tldCorrector = null)
+    public function __construct(TldCorrector $tldCorrector = null)
     {
         $this->formatter = new EmailFormatter();
         $this->validators = [

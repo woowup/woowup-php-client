@@ -43,7 +43,8 @@ class IanaTldProvider
         return $this->tlds;
     }
 
-    public function refresh(): void
+    /** @return void */
+    public function refresh()
     {
         $this->tlds = null;
         if (file_exists($this->cacheFile)) {
@@ -52,7 +53,8 @@ class IanaTldProvider
         $this->getAll();
     }
 
-    private function loadFromCache(): ?array
+    /** @return array|null */
+    private function loadFromCache()
     {
         if (!file_exists($this->cacheFile)) {
             return null;
@@ -65,7 +67,8 @@ class IanaTldProvider
         return $this->readCacheFile();
     }
 
-    private function readCacheFile(): ?array
+    /** @return array|null */
+    private function readCacheFile()
     {
         if (!file_exists($this->cacheFile)) {
             return null;
@@ -75,7 +78,8 @@ class IanaTldProvider
         return is_array($data) ? $data : null;
     }
 
-    private function fetchAndCache(): ?array
+    /** @return array|null */
+    private function fetchAndCache()
     {
         $raw = @file_get_contents(self::IANA_URL);
         if ($raw === false) {

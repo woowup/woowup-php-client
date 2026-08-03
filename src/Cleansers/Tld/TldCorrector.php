@@ -166,7 +166,8 @@ class TldCorrector
      * The order edit-distance → prefix is critical: without it, "con" would match prefix "co"
      * instead of being corrected to "com" via edit distance 1.
      */
-    private function correctInvalidTld(string $name, string $tld): ?string
+    /** @return string|null */
+    private function correctInvalidTld(string $name, string $tld)
     {
         // Pre-process IDN punycode: xn--com-9ma → extract leading alpha root → "com".
         // This handles cases where the TLD is a punycode-encoded form of a common TLD.
@@ -200,7 +201,8 @@ class TldCorrector
         return $this->findByPrefix($name, $tld);
     }
 
-    private function findByEditDistance(string $tld, int $maxDistance, ?array $candidates = null): ?string
+    /** @return string|null */
+    private function findByEditDistance(string $tld, int $maxDistance, array $candidates = null)
     {
         foreach ($candidates ?? $this->targetTlds as $target) {
             if (levenshtein($tld, $target) <= $maxDistance) {
@@ -210,7 +212,8 @@ class TldCorrector
         return null;
     }
 
-    private function findByPrefix(string $name, string $tld): ?string
+    /** @return string|null */
+    private function findByPrefix(string $name, string $tld)
     {
         // Try longest matching prefix first to prefer "com.ar" over "com" for "comar".
         $candidates = $this->targetTlds;
@@ -259,7 +262,8 @@ class TldCorrector
         return [substr($domain, 0, $pos), substr($domain, $pos + 1)];
     }
 
-    private function logNewSuffix(string $providerName, string $tld): void
+    /** @return void */
+    private function logNewSuffix(string $providerName, string $tld)
     {
         if ($this->newSuffixLog === null) {
             return;
