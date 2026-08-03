@@ -23,6 +23,13 @@ class TldCorrector
         'com', 'ar', 'es', 'net', 'org', 'br', 'io', 'co', 'lat', 'mx', 'cl', 'pe', 'uy', 'edu', 'gov',
     ];
 
+    // When the label right before the broken TLD is already a generic second-level
+    // label (gov.XX, com.XX, mil.XX, edu.XX), XX is expected to be a country code,
+    // not another generic TLD — otherwise "gov.go" resolves to "gov.io" instead of
+    // "gov.co", and "com.con" resolves to "com.com" instead of "com.co".
+    const TWO_LEVEL_CONTEXT_LABELS = ['com', 'net', 'org', 'edu', 'gov', 'mil'];
+    const DEFAULT_COUNTRY_CODE_PARTNERS = ['co', 'ar', 'es', 'br', 'mx', 'cl', 'pe', 'uy'];
+
     /** @var IanaTldProvider */
     private $iana;
     /** @var array */
@@ -33,6 +40,8 @@ class TldCorrector
     private $denylist;
     /** @var array */
     private $targetTlds;
+    /** @var array */
+    private $countryCodePartners;
     /** @var string|null */
     private $newSuffixLog;
 
@@ -43,6 +52,7 @@ class TldCorrector
         $this->multiRegionProviders  = $config['multi_region_providers']  ?? self::DEFAULT_MULTI_REGION_PROVIDERS;
         $this->denylist              = $config['denylist']                ?? self::DEFAULT_DENYLIST;
         $this->targetTlds            = $config['target_tlds']             ?? self::DEFAULT_TARGET_TLDS;
+        $this->countryCodePartners   = $config['country_code_partners']   ?? self::DEFAULT_COUNTRY_CODE_PARTNERS;
         $this->newSuffixLog          = $config['new_suffix_log']          ?? null;
     }
 
@@ -169,6 +179,17 @@ class TldCorrector
             $tld = $stripped;
         }
 
+        // Two-level context: "...com.XX" / "...gov.XX" / "...mil.XX" etc already
+        // has a generic label before the broken one, so XX is expected to be a
+        // country code — resolve against country candidates first.
+        $lastNameLabel = strpos($name, '.') !== false ? substr($name, strrpos($name, '.') + 1) : null;
+        if ($lastNameLabel !== null && in_array($lastNameLabel, self::TWO_LEVEL_CONTEXT_LABELS, true)) {
+            $countryMatch = $this->findByEditDistance($tld, 1, $this->countryCodePartners);
+            if ($countryMatch !== null) {
+                return $countryMatch;
+            }
+        }
+
         // Step 1: edit distance = 1 against target TLDs (ordered by frequency).
         $editMatch = $this->findByEditDistance($tld, 1);
         if ($editMatch !== null) {
@@ -179,9 +200,9 @@ class TldCorrector
         return $this->findByPrefix($name, $tld);
     }
 
-    private function findByEditDistance(string $tld, int $maxDistance): ?string
+    private function findByEditDistance(string $tld, int $maxDistance, ?array $candidates = null): ?string
     {
-        foreach ($this->targetTlds as $target) {
+        foreach ($candidates ?? $this->targetTlds as $target) {
             if (levenshtein($tld, $target) <= $maxDistance) {
                 return $target;
             }
