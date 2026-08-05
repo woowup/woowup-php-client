@@ -122,25 +122,38 @@ class TldCorrector
 
     private function correctMultiRegionDomain(string $name, string $tld): TldCorrectionResult
     {
+        // Resolve to a single TLD candidate first — either the original (if
+        // already valid) or the edit-distance/prefix correction — then apply
+        // the denylist check once, uniformly, regardless of which path got us
+        // there. Otherwise a candidate produced by correctInvalidTld (e.g.
+        // "hotmail.c" -> "co") never gets re-checked against the denylist and
+        // a known provider ends up on a TLD it should never keep (hotmail.co).
+        $wasCorrected = false;
         if ($this->iana->isValid($tld)) {
-            // Denylist only applies to a bare suffix (yahoo.co), never to a legitimate
-            // two-level regional suffix (yahoo.com.co) — otherwise "yahoo.com.co" would
-            // be corrected to "yahoo.com.com".
-            $firstLabel = explode('.', $name)[0];
-            $isBare = $name === $firstLabel;
-            if ($isBare && in_array($tld, $this->denylist, true)) {
-                return TldCorrectionResult::corrected('@' . $name . '.com');
+            $candidate = $tld;
+        } else {
+            $candidate = $this->correctInvalidTld($name, $tld);
+            if ($candidate === null) {
+                return TldCorrectionResult::irrecoverable();
             }
+            $wasCorrected = true;
+        }
+
+        // Denylist only applies to a bare suffix (yahoo.co), never to a legitimate
+        // two-level regional suffix (yahoo.com.co) — otherwise "yahoo.com.co" would
+        // be corrected to "yahoo.com.com".
+        $firstLabel = explode('.', $name)[0];
+        $isBare = $name === $firstLabel;
+        if ($isBare && in_array($candidate, $this->denylist, true)) {
+            return TldCorrectionResult::corrected('@' . $name . '.com');
+        }
+
+        if (!$wasCorrected) {
             $this->logNewSuffix($name, $tld);
             return TldCorrectionResult::unchanged('@' . $name . '.' . $tld);
         }
 
-        $corrected = $this->correctInvalidTld($name, $tld);
-        if ($corrected === null) {
-            return TldCorrectionResult::irrecoverable();
-        }
-
-        return TldCorrectionResult::corrected('@' . $name . '.' . $corrected);
+        return TldCorrectionResult::corrected('@' . $name . '.' . $candidate);
     }
 
     private function correctCustomDomain(string $name, string $tld): TldCorrectionResult
