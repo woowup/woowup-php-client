@@ -30,6 +30,13 @@ class TldCorrector
     const TWO_LEVEL_CONTEXT_LABELS = ['com', 'net', 'org', 'edu', 'gov', 'mil', 'gob'];
     const DEFAULT_COUNTRY_CODE_PARTNERS = ['co', 'ar', 'es', 'br', 'mx', 'cl', 'pe', 'uy'];
 
+    // Not real IANA TLDs, but real-world second-level conventions that show up
+    // truncated (missing the country suffix) in LatAm data — e.g. "mincetur.gob"
+    // instead of "mincetur.gob.pe". Edit distance would otherwise "fix" these to
+    // a real but wrong TLD ("gob" -> "gov", distance 1), corrupting a government
+    // domain. Never correct these away; treat them as already valid.
+    const DEFAULT_PROTECTED_TLDS = ['gob'];
+
     /** @var IanaTldProvider */
     private $iana;
     /** @var array */
@@ -42,6 +49,8 @@ class TldCorrector
     private $targetTlds;
     /** @var array */
     private $countryCodePartners;
+    /** @var array */
+    private $protectedTlds;
     /** @var string|null */
     private $newSuffixLog;
 
@@ -53,7 +62,13 @@ class TldCorrector
         $this->denylist              = $config['denylist']                ?? self::DEFAULT_DENYLIST;
         $this->targetTlds            = $config['target_tlds']             ?? self::DEFAULT_TARGET_TLDS;
         $this->countryCodePartners   = $config['country_code_partners']   ?? self::DEFAULT_COUNTRY_CODE_PARTNERS;
+        $this->protectedTlds         = $config['protected_tlds']          ?? self::DEFAULT_PROTECTED_TLDS;
         $this->newSuffixLog          = $config['new_suffix_log']          ?? null;
+    }
+
+    private function isRecognized(string $tld): bool
+    {
+        return $this->iana->isValid($tld) || in_array($tld, $this->protectedTlds, true);
     }
 
     /**
@@ -129,7 +144,7 @@ class TldCorrector
         // "hotmail.c" -> "co") never gets re-checked against the denylist and
         // a known provider ends up on a TLD it should never keep (hotmail.co).
         $wasCorrected = false;
-        if ($this->iana->isValid($tld)) {
+        if ($this->isRecognized($tld)) {
             $candidate = $tld;
         } else {
             $candidate = $this->correctInvalidTld($name, $tld);
@@ -158,7 +173,7 @@ class TldCorrector
 
     private function correctCustomDomain(string $name, string $tld): TldCorrectionResult
     {
-        if ($this->iana->isValid($tld)) {
+        if ($this->isRecognized($tld)) {
             return TldCorrectionResult::unchanged('@' . $name . '.' . $tld);
         }
 
