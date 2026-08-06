@@ -82,6 +82,15 @@ class TldCorrector
         list($name, $tld) = $this->splitAtLastDot($domain);
 
         if ($tld === '') {
+            // No dot at all (e.g. "hotmail", "hotmailcom", "outlookcom") — if the
+            // whole domain is a known provider, possibly with "com" stuck on with
+            // no separator, rebuild it as the canonical "provider.com" instead of
+            // rejecting outright. Only exact known-provider matches; a dotless
+            // custom domain has no safe way to guess a TLD, stays irrecoverable.
+            $reconstructed = $this->reconstructKnownProvider($domain);
+            if ($reconstructed !== null) {
+                return TldCorrectionResult::corrected('@' . $reconstructed);
+            }
             return TldCorrectionResult::irrecoverable();
         }
 
@@ -116,6 +125,22 @@ class TldCorrector
         }
 
         return 'custom';
+    }
+
+    /** @return string|null */
+    private function reconstructKnownProvider(string $domain)
+    {
+        foreach ($this->singleDomainProviders as $provider => $canonicalTld) {
+            if ($domain === $provider || $domain === $provider . $canonicalTld) {
+                return $provider . '.' . $canonicalTld;
+            }
+        }
+        foreach ($this->multiRegionProviders as $provider) {
+            if ($domain === $provider || $domain === $provider . 'com') {
+                return $provider . '.com';
+            }
+        }
+        return null;
     }
 
     // -------------------------------------------------------------------------
