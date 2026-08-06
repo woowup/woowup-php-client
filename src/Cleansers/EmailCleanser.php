@@ -162,8 +162,9 @@ class EmailCleanser
     /**
      * Extracts user and domain parts from an email.
      * Handles multiple @ symbols and Gmail typo detection.
+     * @return void
      */
-    protected function extractEmailParts(string $email): void
+    protected function extractEmailParts(string $email)
     {
         $email = trim($email);
 
@@ -190,12 +191,14 @@ class EmailCleanser
         $this->extractStandardParts($cleanedEmail);
     }
 
-    public function getEmailUser(): ?string
+    /** @return string|null */
+    public function getEmailUser()
     {
         return $this->emailUser;
     }
 
-    public function getEmailDomain(): ?string
+    /** @return string|null */
+    public function getEmailDomain()
     {
         return $this->emailDomain;
     }
@@ -277,7 +280,8 @@ class EmailCleanser
         return $email;
     }
 
-    private function resetEmailParts(): void
+    /** @return void */
+    private function resetEmailParts()
     {
         $this->emailUser = null;
         $this->emailDomain = null;
@@ -389,8 +393,9 @@ class EmailCleanser
 
     /**
      * Extracts standard email parts (non-Gmail).
+     * @return void
      */
-    private function extractStandardParts(string $email): void
+    private function extractStandardParts(string $email)
     {
         $atPos = strpos($email, '@');
 
