@@ -408,11 +408,18 @@ class EmailCleanser
         // Lowercased so provider detection (single/multi-region) and TLD
         // comparisons are case-insensitive — otherwise "YAHOO.CON" never
         // matches "yahoo" or gets its edit distance to "com" computed right.
+        $domain = mb_strtolower(substr($email, $atPos));
+        // Comma or whitespace standing in for the dot separator (e.g.
+        // "gmail,com", "copaair, com") is never valid inside a real domain,
+        // unlike a hyphen — which legitimately appears in real domains
+        // ("mi-empresa.com.ar") and is deliberately left untouched here, since
+        // blindly dotting it could turn one real domain into a different one.
+        $domain = preg_replace('/[,\s]+/', '.', $domain);
         // Consecutive dots (e.g. "hotmail..con") are collapsed to one, and a
         // trailing dot (e.g. "hotmail.com.") is trimmed — otherwise either
         // leaves an empty label, and a trailing one leaves an empty TLD after
         // splitting at the last dot, making the address irrecoverable.
-        $domain = preg_replace('/\.{2,}/', '.', mb_strtolower(substr($email, $atPos)));
+        $domain = preg_replace('/\.{2,}/', '.', $domain);
         $this->emailDomain = rtrim($domain, '.');
     }
 }

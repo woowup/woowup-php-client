@@ -258,11 +258,45 @@ class TldCorrector
     private function findByEditDistance(string $tld, int $maxDistance, array $candidates = null)
     {
         foreach ($candidates ?? $this->targetTlds as $target) {
-            if (levenshtein($tld, $target) <= $maxDistance) {
+            if (self::damerauLevenshtein($tld, $target) <= $maxDistance) {
                 return $target;
             }
         }
         return null;
+    }
+
+    // Optimal String Alignment distance: like PHP's native levenshtein()
+    // (insert/delete/substitute), plus an adjacent-transposition op at cost 1
+    // — so "ocm" is distance 1 from "com" instead of 2, catching swapped-letter
+    // typos like hotmail.ocm without widening the match to unrelated TLDs. No
+    // pair in DEFAULT_TARGET_TLDS/DEFAULT_COUNTRY_CODE_PARTNERS transposes into
+    // another one of those targets, so this only ever resolves a typo back to
+    // the same TLD it came from.
+    private static function damerauLevenshtein(string $s1, string $s2): int
+    {
+        $len1 = strlen($s1);
+        $len2 = strlen($s2);
+        $d    = [];
+        for ($i = 0; $i <= $len1; $i++) {
+            $d[$i][0] = $i;
+        }
+        for ($j = 0; $j <= $len2; $j++) {
+            $d[0][$j] = $j;
+        }
+        for ($i = 1; $i <= $len1; $i++) {
+            for ($j = 1; $j <= $len2; $j++) {
+                $cost      = $s1[$i - 1] === $s2[$j - 1] ? 0 : 1;
+                $d[$i][$j] = min(
+                    $d[$i - 1][$j] + 1,
+                    $d[$i][$j - 1] + 1,
+                    $d[$i - 1][$j - 1] + $cost
+                );
+                if ($i > 1 && $j > 1 && $s1[$i - 1] === $s2[$j - 2] && $s1[$i - 2] === $s2[$j - 1]) {
+                    $d[$i][$j] = min($d[$i][$j], $d[$i - 2][$j - 2] + 1);
+                }
+            }
+        }
+        return $d[$len1][$len2];
     }
 
     /** @return string|null */
