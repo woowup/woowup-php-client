@@ -104,9 +104,16 @@ class EmailCleanser
             }
         }
 
-        return $this->isGmailDomain()
-            ? $this->sanitizeGmailEmail()
-            : $this->prettify($this->emailUser . $this->emailDomain);
+        if ($this->isGmailDomain()) {
+            return $this->sanitizeGmailEmail();
+        }
+
+        // Pre-TLD-correction behavior returned the raw input; kept as-is when the
+        // feature is off so disabling FEATURE_TLD_CORRECTION restores byte-identical
+        // legacy output, not just "no TLD correction applied".
+        return $this->tldCorrector !== null
+            ? $this->prettify($this->emailUser . $this->emailDomain)
+            : $this->prettify($email);
     }
 
     /**
@@ -320,14 +327,20 @@ class EmailCleanser
     }
 
     /**
-     * Checks if the domain part contains mixed domains (Gmail + another provider),
-     * e.g. "gmailhotmail.com". Only counts a known domain found outside the matched
-     * Gmail-variant substring — otherwise a plain Gmail typo like "gmaol.com" would
-     * false-positive on "aol" (a substring of "gmaol") and get rejected instead of
-     * corrected to "@gmail.com".
+     * Checks if the domain part contains mixed domains (Gmail + another provider).
+     *
+     * With TLD correction enabled, a known domain only counts if found outside the
+     * matched Gmail-variant substring — otherwise a plain Gmail typo like "gmaol.com"
+     * would false-positive on "aol" (a substring of "gmaol") and get rejected instead
+     * of corrected to "@gmail.com". Kept behind the flag so disabling
+     * FEATURE_TLD_CORRECTION restores the exact legacy detection.
      */
     private function hasMixedDomains(string $domainPart): bool
     {
+        if ($this->tldCorrector === null) {
+            return $this->containsGmailDomain($domainPart) && $this->containsOtherKnownDomain($domainPart);
+        }
+
         $dp = mb_strtolower($domainPart);
 
         foreach (self::GMAIL_DOMAINS as $gmailDomain) {
@@ -342,6 +355,16 @@ class EmailCleanser
             }
         }
 
+        return false;
+    }
+
+    private function containsGmailDomain(string $domainPart): bool
+    {
+        foreach (self::GMAIL_DOMAINS as $gmailDomain) {
+            if (strpos($domainPart, $gmailDomain) !== false) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -405,6 +428,14 @@ class EmailCleanser
         }
 
         $this->emailUser = substr($email, 0, $atPos);
+
+        // Legacy behavior: no domain normalization, kept so disabling
+        // FEATURE_TLD_CORRECTION restores the exact pre-TLD-correction extraction.
+        if ($this->tldCorrector === null) {
+            $this->emailDomain = substr($email, $atPos);
+            return;
+        }
+
         // Lowercased so provider detection (single/multi-region) and TLD
         // comparisons are case-insensitive — otherwise "YAHOO.CON" never
         // matches "yahoo" or gets its edit distance to "com" computed right.
