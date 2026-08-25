@@ -6,6 +6,7 @@ namespace WoowUp\Endpoints;
  */
 class Users extends Endpoint
 {
+    const INVALID_EMAIL = 'noemail@noemail.com';
     protected const TELEPHONE_CLEANED = 'telephone_cleaned';
     protected const TELEPHONE_REJECTED = 'telephone_rejected';
     protected const TELEPHONE_VALIDATED = 'telephone_validated';
@@ -200,13 +201,24 @@ class Users extends Endpoint
 
         $sanitizedEmail = $this->cleanser->email->sanitize($originalEmail);
 
-        if ($sanitizedEmail === false) {
+        if ($sanitizedEmail === false || $sanitizedEmail === self::INVALID_EMAIL) {
             $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_REJECTED);
             $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
             $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
 
             $data['mailing_enabled'] = 'disabled';
             $data['mailing_enabled_reason'] = 'other';
+
+            if ($sanitizedEmail === self::INVALID_EMAIL) {
+                $localPart =
+                    ($data['document']    ?? null) ?:
+                        ($data['service_uid'] ?? null) ?:
+                            ($data['telefono']    ?? null);
+
+                $data['email'] = $localPart
+                    ? $localPart . '@noemail.com'
+                    : $sanitizedEmail;
+            }
 
             return $data;
         }
