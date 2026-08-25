@@ -204,6 +204,10 @@ class Users extends Endpoint
             $data['tags'] = $this->cleanser->tags->addTag($data['tags'] ?? '', self::EMAIL_REJECTED);
             $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_CLEANED);
             $data['tags'] = $this->cleanser->tags->removeTag($data['tags'] ?? '', self::EMAIL_VALIDATED);
+
+            $data['mailing_enabled'] = 'disabled';
+            $data['mailing_enabled_reason'] = 'other';
+
             return $data;
         }
 
