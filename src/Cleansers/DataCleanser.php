@@ -62,6 +62,17 @@ class DataCleanser
         self::$globalTldCorrector = $corrector;
     }
 
+    /**
+     * Lets a caller outside the DataCleanser/EmailCleanser chain (e.g. a find-path identity
+     * builder that can't share an instance with the write path) mirror whatever corrector is
+     * currently configured, instead of reimplementing/caching its own and drifting out of sync.
+     * @return TldCorrector|null
+     */
+    public static function getGlobalTldCorrector()
+    {
+        return self::$globalTldCorrector;
+    }
+
     /** @return void */
     public function setTldCorrector(TldCorrector $corrector)
     {
