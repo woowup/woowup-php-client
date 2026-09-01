@@ -52,9 +52,12 @@ class DataCleanser
     /**
      * Configure a TldCorrector that will be used by all DataCleanser instances created afterwards.
      * Call once at application startup (e.g. from a feature-flag check in the Pimple provider).
+     * Pass null to clear it — required by callers that process several accounts in the same
+     * process without forking (e.g. a command run with no parallelism), so a corrector configured
+     * for one account doesn't leak into the next one that has the feature flag off.
      * @return void
      */
-    public static function configureGlobalTldCorrector(TldCorrector $corrector)
+    public static function configureGlobalTldCorrector(TldCorrector $corrector = null)
     {
         self::$globalTldCorrector = $corrector;
     }
