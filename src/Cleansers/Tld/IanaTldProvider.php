@@ -1,0 +1,116 @@
+<?php
+
+namespace WoowUp\Cleansers\Tld;
+
+class IanaTldProvider
+{
+    const IANA_URL = 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt';
+
+    const FALLBACK_TLDS = [
+        'com', 'net', 'org', 'edu', 'gov', 'mil', 'int',
+        'ar', 'es', 'br', 'mx', 'co', 'cl', 'pe', 'bo', 'uy', 'py', 'ec', 've', 'cr', 'pa', 'gt', 'hn', 'sv', 'ni', 'do', 'cu', 'pr',
+        'us', 'uk', 'ca', 'au', 'de', 'fr', 'it', 'pt', 'nl', 'be', 'ch', 'at', 'se', 'no', 'dk', 'fi', 'pl', 'cz', 'ru',
+        'jp', 'cn', 'in', 'kr', 'io', 'lat', 'tv', 'info', 'biz', 'name', 'mobi', 'tel', 'pro',
+    ];
+
+    /** @var string */
+    private $cacheFile;
+    /** @var int */
+    private $ttl;
+    /** @var array|null */
+    private $tlds = null;
+
+    public function __construct(string $cacheFile = '/tmp/iana_tlds.cache', int $ttl = 604800)
+    {
+        $this->cacheFile = $cacheFile;
+        $this->ttl       = $ttl;
+    }
+
+    public function isValid(string $tld): bool
+    {
+        return in_array(strtolower($tld), $this->getAll(), true);
+    }
+
+    public function getAll(): array
+    {
+        if ($this->tlds !== null) {
+            return $this->tlds;
+        }
+
+        // Stale-if-error: an expired cache from a past successful fetch is still
+        // far more accurate than the hardcoded fallback list.
+        $this->tlds = $this->loadFromCache() ?? $this->fetchAndCache() ?? $this->readCacheFile() ?? self::FALLBACK_TLDS;
+        return $this->tlds;
+    }
+
+    /** @return void */
+    public function refresh()
+    {
+        $this->tlds = null;
+        if (file_exists($this->cacheFile)) {
+            unlink($this->cacheFile);
+        }
+        $this->getAll();
+    }
+
+    /** @return array|null */
+    private function loadFromCache()
+    {
+        if (!file_exists($this->cacheFile)) {
+            return null;
+        }
+
+        if ((time() - filemtime($this->cacheFile)) > $this->ttl) {
+            return null;
+        }
+
+        return $this->readCacheFile();
+    }
+
+    /** @return array|null */
+    private function readCacheFile()
+    {
+        if (!file_exists($this->cacheFile)) {
+            return null;
+        }
+
+        $data = json_decode(file_get_contents($this->cacheFile), true);
+        return is_array($data) ? $data : null;
+    }
+
+    /** @return array|null */
+    private function fetchAndCache()
+    {
+        $raw = @file_get_contents(self::IANA_URL);
+        if ($raw === false) {
+            return null;
+        }
+
+        $tlds = $this->parse($raw);
+        if (empty($tlds)) {
+            return null;
+        }
+
+        $tmp = $this->cacheFile . '.tmp.' . getmypid();
+        @file_put_contents($tmp, json_encode($tlds), LOCK_EX);
+        @rename($tmp, $this->cacheFile);
+        return $tlds;
+    }
+
+    private function parse(string $raw): array
+    {
+        $tlds = [];
+        foreach (explode("\n", $raw) as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+            // Skip IDN entries (xn--)
+            if (stripos($line, 'xn--') === 0) {
+                continue;
+            }
+            $tlds[] = strtolower($line);
+        }
+        return $tlds;
+    }
+}
