@@ -30,6 +30,10 @@ class EmailCleanser
         'gmeil', 'gmeel', 'gmel',
         'gmaill', 'gmil', 'ggmail', 'gmmail', 'gmailm',
         'gemail', 'gaiml', 'gail', 'gmailcom', 'gmailcomcom',
+        'gamail', 'gimail', 'gmasil', 'gmnail', 'gamial', 'gmauil', 'gomail', 'gmsil',
+        'gtmail', 'gmaqil', 'gmaail', 'gmiail', 'gmsail', 'gimai', 'gmaoil', 'gnmail',
+        'gmayl', 'gmisl', 'gamaoil', 'gimeil', 'gma8il', 'gamcil', 'giimail', 'gimil',
+        'gmaeil', 'gamlil', 'gfmail', 'gmia',
     ];
 
     const KNOWN_DOMAINS = [
