@@ -181,6 +181,23 @@ class Endpoint
         ]);
     }
 
+    /**
+     * DELETE for endpoints that identify the resource in the body instead of the URL. Kept apart
+     * from delete() because Blacklist overrides delete($type) with a single argument, and widening
+     * the parent signature breaks that override. The payload is never run through sanitizeData():
+     * here it selects what gets deleted, and rewriting it could target a different record.
+     */
+    protected function deleteJson($url, $data)
+    {
+        return $this->request('DELETE', $url, [
+            'json'    => $data,
+            'headers' => [
+                'Authorization' => 'Basic ' . $this->apikey,
+                'Accept'        => 'application/json',
+            ],
+        ]);
+    }
+
     protected function request($verb, $url, $params)
     {
         $class = static::class;

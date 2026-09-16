@@ -49,11 +49,17 @@ class Purchases extends Endpoint
 		return $this->putAsync($this->host.'/purchases', $purchase);
 	}
 
-	public function find($invoiceNumber)
+	/**
+	 * The API answers at most one purchase per invoice number. When the same invoice exists in
+	 * several branches, pass `branch_id` in $params to get the one from that branch.
+	 */
+	public function find($invoiceNumber, $params = [])
 	{
-		$response = $this->get($this->host . '/purchases', [
+		$params = array_merge([
 			'invoice_number' => $invoiceNumber,
-		]);
+		], $params);
+
+		$response = $this->get($this->host . '/purchases', $params);
 
 		if ($response->getStatusCode() == Endpoint::HTTP_OK) {
             $data = json_decode($response->getBody());
@@ -79,6 +85,28 @@ class Purchases extends Endpoint
 		}
 
 		return false;
+	}
+
+	/**
+	 * Soft deletes a purchase. Without a branch name the API resolves the invoice number alone and
+	 * deletes the first match from any branch, so callers that know the branch must pass it.
+	 * Deleting an already deleted purchase responds 404, which surfaces as a RequestException.
+	 *
+	 * @param string|int  $invoiceNumber
+	 * @param string|null $branchName
+	 * @return bool
+	 */
+	public function delete($invoiceNumber, $branchName = null)
+	{
+		$body = ['invoice_number' => $invoiceNumber];
+
+		if (!empty($branchName)) {
+			$body['branch_name'] = $branchName;
+		}
+
+		$response = $this->deleteJson($this->host . '/purchases', $body);
+
+		return $response->getStatusCode() == Endpoint::HTTP_OK;
 	}
 
     protected function cleanTelephone($data){
