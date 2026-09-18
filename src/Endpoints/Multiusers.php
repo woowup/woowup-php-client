@@ -89,6 +89,43 @@ class Multiusers extends Endpoint
         return false;
     }
 
+    /**
+     * Merges two customers of the same account: `from` is soft deleted and everything it owns moves
+     * to `to`. There is no way back: the purchases are reassigned without a pointer to where they
+     * came from, so a merge cannot be undone even from the database.
+     *
+     * The identity is NOT completed with $DEFAULT_IDENTITY, unlike find(), exist() and addPoints().
+     * Sending an empty document next to an email leaves the resolution of `from` to the backend, and
+     * whoever asks for a merge has to be the one deciding which identifier the pair is matched by.
+     *
+     * Returns the decoded body instead of a boolean because the status code cannot tell a merge from
+     * a no-op: when either side does not resolve, the API answers 200 with an empty body and merges
+     * nothing. Callers have to check `code` for 'ok'.
+     *
+     * Sanitization is a no-op here: the rules of this endpoint are on `street`, `gender` and
+     * `birthdate`, none of which exists in this body. Adding a top level rule would change that.
+     *
+     * @param array $from identity of the customer that is deleted
+     * @param array $to   identity of the customer that survives
+     *
+     * @return array the decoded response body, empty when there was none
+     */
+    public function merge(array $from, array $to)
+    {
+        $response = $this->post($this->host . '/multiusers/merge', [
+            'from' => $from,
+            'to'   => $to,
+        ]);
+
+        if ($response->getStatusCode() != Endpoint::HTTP_OK) {
+            return [];
+        }
+
+        $body = json_decode((string) $response->getBody(), true);
+
+        return is_array($body) ? $body : [];
+    }
+
     public function getUserTransactions($identity, $concept = '')
     {
         $identity = array_merge(self::$DEFAULT_IDENTITY, $identity);
