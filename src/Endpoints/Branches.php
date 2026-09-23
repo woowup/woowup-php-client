@@ -60,6 +60,39 @@ class Branches extends Endpoint
         return false;
     }
 
+    /**
+     * Queues the deletion of a branch AND of every purchase in it: the API answers as soon as it
+     * takes the request and a worker does the work later, so a 200 here means the request was
+     * accepted, never that the branch is gone. The body carries the `request_id` that identifies
+     * that work, which is why this returns it instead of a bool, and `notify_to` is the only way
+     * anyone learns it finished: with an account apikey the API has no other recipient.
+     *
+     * The branch is identified by id in the body, not in the URL, and the id must be the one the
+     * account owns: the API answers 404 otherwise.
+     *
+     * @param int         $branchId
+     * @param string|null $notifyTo email the API writes to when the deletion finishes
+     * @return array the decoded body, `['request_id' => int]` when it was accepted
+     */
+    public function delete($branchId, $notifyTo = null)
+    {
+        $body = ['id' => (int) $branchId];
+
+        if (!empty($notifyTo)) {
+            $body['notify_to'] = $notifyTo;
+        }
+
+        $response = $this->deleteJson($this->host . '/branches', $body);
+
+        if ($response->getStatusCode() != Endpoint::HTTP_OK) {
+            return [];
+        }
+
+        $data = json_decode((string) $response->getBody(), true);
+
+        return isset($data['payload']) && is_array($data['payload']) ? $data['payload'] : [];
+    }
+
     public function search($page = 0, $limit = 10)
     {
         $response = $this->get($this->host . '/branches/', [
