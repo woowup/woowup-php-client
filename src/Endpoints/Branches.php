@@ -72,7 +72,7 @@ class Branches extends Endpoint
      *
      * @param int         $branchId
      * @param string|null $notifyTo email the API writes to when the deletion finishes
-     * @return array the decoded body, `['request_id' => int]` when it was accepted
+     * @return array the decoded payload, `['request_id' => int]` when it was accepted
      */
     public function delete($branchId, $notifyTo = null)
     {
