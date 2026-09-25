@@ -14,8 +14,7 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
  *
  * Process flow:
  * 1. Type validation and normalization
- * 2. Strip a "mailto:" prefix; flag addresses the source marked as invalid and values holding
- *    several addresses
+ * 2. Strip a "mailto:" prefix and reject values holding several addresses
  * 3. Clean VTEX platform emails
  * 4. Extract and validate email parts (user and domain)
  * 5. Apply Gmail-specific cleaning for Gmail domains
@@ -51,11 +50,6 @@ class EmailCleanser
 
     // Marketplace-generated proxy addresses, not a real customer inbox.
     const INVALID_DOMAINS = ['@mail.mercadolibre.com'];
-
-    // Prefixes a source system adds to flag an address it already knows is invalid (Odoo stores
-    // them as "invalido+user@gmail.com"). Gmail and Outlook ignore everything after "+", so keeping
-    // one would deliver to the stranger that owns invalido@gmail.com.
-    const INVALID_MARKER_PREFIXES = ['invalido+'];
 
     const MAILTO_PREFIX = 'mailto:';
 
@@ -105,14 +99,13 @@ class EmailCleanser
         $email = $this->normalizeInput($email);
         $email = $this->removeMailtoPrefix($email);
 
-        // INVALID_EMAIL, not false: on false UserModel/PurchaseModel keep the raw value, so the
-        // purchase would still go out with it; INVALID_EMAIL maps both to <document>@noemail.com.
-        //
-        // Several addresses are checked here, before the Gmail extraction: that one keeps
-        // everything before "@gmail" as the user and drops the "@"s, so "maria@hotmail.com /
-        // juan@gmail.com" became "mariahotmail.comjuan@gmail.com". hasMixedDomains() can't catch
-        // it because it only looks after the last "@".
-        if ($this->isMarkedInvalid($email) || $this->hasSeveralAddresses($email)) {
+        // Checked here, before the Gmail extraction: that one keeps everything before "@gmail" as
+        // the user and drops the "@"s, so "maria@hotmail.com / juan@gmail.com" became
+        // "mariahotmail.comjuan@gmail.com". hasMixedDomains() can't catch it because it only looks
+        // after the last "@". INVALID_EMAIL, not false: on false UserModel/PurchaseModel keep the
+        // raw value, so the purchase would still go out with it; INVALID_EMAIL maps both to
+        // <document>@noemail.com.
+        if ($this->hasSeveralAddresses($email)) {
             $this->resetEmailParts();
             return self::INVALID_EMAIL;
         }
@@ -281,17 +274,6 @@ class EmailCleanser
         }
 
         return $email;
-    }
-
-    private function isMarkedInvalid(string $email): bool
-    {
-        foreach (self::INVALID_MARKER_PREFIXES as $prefix) {
-            if (stripos($email, $prefix) === 0) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function hasSeveralAddresses(string $email): bool

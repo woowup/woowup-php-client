@@ -1,18 +1,15 @@
 <?php
 
 /**
- * EmailCleanser: prefijo "mailto:", direcciones marcadas como inválidas por el sistema de origen
- * ("invalido+...") y varias direcciones en un mismo valor.
+ * EmailCleanser: prefijo "mailto:" y varias direcciones en un mismo valor.
  *
  * - "mailto:" se saca: no puede ser parte de una dirección real.
- * - "invalido+..." devuelve INVALID_EMAIL: Odoo marca así las direcciones que ya sabe inválidas, y
- *   gmail/outlook ignoran lo que va después del "+", así que conservarlas entrega a invalido@...
  * - Dos o más "@" seguidas de un dominio devuelven INVALID_EMAIL: antes la extracción de Gmail
  *   pegaba todo lo anterior a "@gmail" ("maria@hotmail.com / juan@gmail.com" ->
  *   "mariahotmail.comjuan@gmail.com").
  *
  * Fija también lo que NO tiene que cambiar: "@@" y espacios dentro de una sola dirección se siguen
- * corrigiendo, y "invalido" sin "+" o en otra posición no es la marca.
+ * corrigiendo.
  *
  * Ejecutar: php tests/EmailCleanserPrefixesAndMultipleAddressesTest.php
  */
@@ -57,18 +54,6 @@ foreach ([
     check($got === $expected, "'$raw' -> '$expected' (got " . var_export($got, true) . ")");
 }
 
-echo "\ninvalido+ (marca del sistema de origen):\n";
-foreach ([
-    'Invalido+anaisa0615@gmail.com',
-    'invalido+x@hotmail.com',
-    'INVALIDO+x@hotmail.com',
-    'invalido+anaisa0615@gmail',
-    'mailto:invalido+x@gmail.com',
-] as $raw) {
-    $got = sanitize($raw);
-    check($got === EmailCleanser::INVALID_EMAIL, "'$raw' -> INVALID_EMAIL (got " . var_export($got, true) . ")");
-}
-
 echo "\nvarias direcciones en un mismo valor:\n";
 foreach ([
     'maria@hotmail.com / juan@gmail.com',
@@ -85,9 +70,6 @@ echo "\nsin cambios:\n";
 foreach ([
     'kmrr2112@@gmail.com'     => 'kmrr2112@gmail.com',
     'juan peres@gmial.com'    => 'juanperes@gmail.com',
-    'invalido@gmail.com'      => 'invalido@gmail.com',
-    'juan+invalido@gmail.com' => 'juan+invalido@gmail.com',
-    'invalidos+x@gmail.com'   => 'invalidos+x@gmail.com',
     'normal@unal.edu.co'      => 'normal@unal.edu.co',
 ] as $raw => $expected) {
     $got = sanitize($raw);
