@@ -14,10 +14,11 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
  *
  * Process flow:
  * 1. Type validation and normalization
- * 2. Clean VTEX platform emails
- * 3. Extract and validate email parts (user and domain)
- * 4. Apply Gmail-specific cleaning for Gmail domains
- * 5. Return sanitized email or false if invalid
+ * 2. Strip a "mailto:" prefix and reject values holding several addresses
+ * 3. Clean VTEX platform emails
+ * 4. Extract and validate email parts (user and domain)
+ * 5. Apply Gmail-specific cleaning for Gmail domains
+ * 6. Return sanitized email or false if invalid
  */
 class EmailCleanser
 {
@@ -49,6 +50,12 @@ class EmailCleanser
 
     // Marketplace-generated proxy addresses, not a real customer inbox.
     const INVALID_DOMAINS = ['@mail.mercadolibre.com'];
+
+    const MAILTO_PREFIX = 'mailto:';
+
+    // An "@" followed by something that looks like a domain ("@hotmail.com", "@hotmail,com").
+    // Two or more of these mean the value holds several addresses, not one address with a typo.
+    const ADDRESS_PATTERN = '/@[^@\s]+[.,][a-z]{2,}/i';
 
     private $formatter;
     private $validators;
@@ -90,6 +97,19 @@ class EmailCleanser
         }
 
         $email = $this->normalizeInput($email);
+        $email = $this->removeMailtoPrefix($email);
+
+        // Checked here, before the Gmail extraction: that one keeps everything before "@gmail" as
+        // the user and drops the "@"s, so "maria@hotmail.com / juan@gmail.com" became
+        // "mariahotmail.comjuan@gmail.com". hasMixedDomains() can't catch it because it only looks
+        // after the last "@". INVALID_EMAIL, not false: on false UserModel/PurchaseModel keep the
+        // raw value, so the purchase would still go out with it; INVALID_EMAIL maps both to
+        // <document>@noemail.com.
+        if ($this->hasSeveralAddresses($email)) {
+            $this->resetEmailParts();
+            return self::INVALID_EMAIL;
+        }
+
         $email = $this->cleanVtexEmail($email);
 
         if ($email === false) {
@@ -245,6 +265,20 @@ class EmailCleanser
     private function isGmailDomain(): bool
     {
         return $this->emailDomain === '@gmail.com';
+    }
+
+    private function removeMailtoPrefix(string $email): string
+    {
+        if (stripos($email, self::MAILTO_PREFIX) === 0) {
+            return trim(substr($email, strlen(self::MAILTO_PREFIX)));
+        }
+
+        return $email;
+    }
+
+    private function hasSeveralAddresses(string $email): bool
+    {
+        return preg_match_all(self::ADDRESS_PATTERN, $email) >= 2;
     }
 
     private function isInvalidDomain(): bool
