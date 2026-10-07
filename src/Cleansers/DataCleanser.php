@@ -17,6 +17,11 @@ class DataCleanser
     public $street;
 
     /**
+     * @var PostcodeCleanser Postcode field cleanser
+     */
+    public $postcode;
+
+    /**
      * @var TelephoneCleanser Telephone field cleanser
      */
     public $telephone;
@@ -87,6 +92,7 @@ class DataCleanser
     public function __construct()
     {
         $this->street = new StreetCleanser();
+        $this->postcode = new PostcodeCleanser();
         $this->telephone = new TelephoneCleanser();
         $this->tags = new TagsCleanser();
         $this->email = new EmailCleanser(self::$globalTldCorrector);
