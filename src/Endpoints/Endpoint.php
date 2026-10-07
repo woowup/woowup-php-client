@@ -14,16 +14,31 @@ class Endpoint
     const HTTP_NOT_FOUND        = 404;
     const HTTP_GONE             = 410;
     const HTTP_TOO_MANY_REQUEST = 429;
+    const HTTP_INTERNAL_ERROR   = 500;
     const HTTP_BAD_GATEWAY      = 502;
     const HTTP_SERVICE_UNAVAIL  = 503;
+    const HTTP_GATEWAY_TIMEOUT  = 504;
 
-    const MAX_ATTEMPTS  = 25;
-    const MAX_SLEEP_SEC = 60;
+    const MAX_ATTEMPTS           = 25;
+    const MAX_TRANSIENT_ATTEMPTS = 5;
+    const MAX_SLEEP_SEC          = 60;
 
     protected static $retryResponses = [
         self::HTTP_TOO_MANY_REQUEST,
         self::HTTP_BAD_GATEWAY,
         self::HTTP_SERVICE_UNAVAIL,
+    ];
+
+    /**
+     * Failures that are usually transient but can also be deterministic for a given payload (a 500
+     * from a backend bug, a timeout on a request that did land). They get a shorter cap than
+     * $retryResponses, so a request that always fails costs seconds instead of the twenty minutes
+     * of the throttling budget. A failure with no response at all (timeout, dropped connection)
+     * follows the same cap.
+     */
+    protected static $transientResponses = [
+        self::HTTP_INTERNAL_ERROR,
+        self::HTTP_GATEWAY_TIMEOUT,
     ];
 
     protected $host;
@@ -245,8 +260,13 @@ class Endpoint
      */
     private function assertRetryable($e, $attempts)
     {
-        if (!$e instanceof \GuzzleHttp\Exception\RequestException || !$e->hasResponse()) {
+        if (!$e instanceof \GuzzleHttp\Exception\RequestException) {
             throw $e;
+        }
+
+        if (!$e->hasResponse() || in_array($e->getResponse()->getStatusCode(), self::$transientResponses)) {
+            $this->assertTransientRetryable($e, $attempts);
+            return;
         }
 
         $statusCode = $e->getResponse()->getStatusCode();
@@ -263,13 +283,35 @@ class Endpoint
     }
 
     /**
-     * @param \Psr\Http\Message\ResponseInterface $response
-     * @param int                                  $attempts
+     * Rethrows the original exception once the transient cap is spent, so the caller logs the
+     * real error (status code or cURL message) instead of a generic "max attempts".
+     *
+     * @param \GuzzleHttp\Exception\RequestException $e
+     * @param int                                    $attempts
+     * @throws \GuzzleHttp\Exception\RequestException
+     */
+    private function assertTransientRetryable($e, $attempts)
+    {
+        $label = $e->hasResponse()
+            ? 'HTTP ' . $e->getResponse()->getStatusCode()
+            : 'cURL error ' . ($e->getHandlerContext()['errno'] ?? '?') . ' (no response)';
+
+        if ($attempts + 1 >= self::MAX_TRANSIENT_ATTEMPTS) {
+            error_log('[ERROR] [WoowupClient] ' . $label . ' on attempt ' . ($attempts + 1) . '/' . self::MAX_TRANSIENT_ATTEMPTS . '. Max attempts reached.');
+            throw $e;
+        }
+
+        error_log('[WARNING] [WoowupClient] ' . $label . ' on attempt ' . ($attempts + 1) . '/' . self::MAX_TRANSIENT_ATTEMPTS . '. Retrying...');
+    }
+
+    /**
+     * @param \Psr\Http\Message\ResponseInterface|null $response null when the request got no response
+     * @param int                                       $attempts
      * @return int
      */
     private function calculateSleep($response, $attempts)
     {
-        if ($response->getStatusCode() === self::HTTP_TOO_MANY_REQUEST) {
+        if ($response && $response->getStatusCode() === self::HTTP_TOO_MANY_REQUEST) {
             $retryAfter = (int) $response->getHeaderLine('Retry-After');
             if ($retryAfter > 0) {
                 return $retryAfter;
