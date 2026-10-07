@@ -29,6 +29,10 @@ class Multiusers extends Endpoint
                 'callable' => fn($v) => $this->cleanser->street->truncate($v),
             ],
             [
+                'path' => ['postcode'],
+                'callable' => fn($v) => $this->cleanser->postcode->truncate($v),
+            ],
+            [
                 'path' => ['gender'],
                 'callable' => fn($v) => $this->cleanser->gender->sanitize($v),
             ],
