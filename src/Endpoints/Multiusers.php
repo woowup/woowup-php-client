@@ -231,7 +231,7 @@ class Multiusers extends Endpoint
                 $localPart =
                     ($data['document']    ?? null) ?:
                         ($data['service_uid'] ?? null) ?:
-                            ($data['telefono']    ?? null);
+                            ($data['telephone']   ?? null);
 
                 $data['email'] = $localPart
                     ? $localPart . '@noemail.com'
