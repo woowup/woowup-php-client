@@ -43,16 +43,70 @@ class Multiusers extends Endpoint
         ];
     }
 
+    /**
+     * Account multi-id settings, read once per instance (see multidentificatorSettings()).
+     * @var array|null
+     */
+    private $multidentificatorSettings = null;
+    private $multidentificatorSettingsLoaded = false;
+
     public function update($user)
     {
-        $response = $this->put($this->host . '/multiusers', $user);
+        $response = $this->put($this->host . '/multiusers', $this->withoutUnconfiguredServiceUid($user));
 
         return $response->getStatusCode() == Endpoint::HTTP_OK || $response->getStatusCode() == Endpoint::HTTP_CREATED;
     }
 
     public function updateAsync($user) // returns promise
     {
-        return $this->putAsync($this->host.'/multiusers', $user);
+        return $this->putAsync($this->host.'/multiusers', $this->withoutUnconfiguredServiceUid($user));
+    }
+
+    /**
+     * PUT /multiusers answers 400 "No identificator received, please check multi-id settings" when
+     * the body carries service_uid and the account does not have "Id externo" enabled in its
+     * multi-id (POST /users accepts it). This drops service_uid from the PUT body in that case.
+     * Only service_uid: email, telephone and document are customer data too and are always sent.
+     *
+     * When the multi-id cannot be read, nothing is dropped and the PUT goes out as before. The
+     * settings, and the failure to read them, are memoized for the life of the instance: a failing
+     * GET /account is not retried on every PUT, so an outage does not double the requests.
+     *
+     * Works on a copy: the caller's array is not modified.
+     *
+     * @param array $user
+     * @return array
+     */
+    protected function withoutUnconfiguredServiceUid($user)
+    {
+        if (!is_array($user) || !array_key_exists('service_uid', $user)) {
+            return $user;
+        }
+
+        $settings = $this->multidentificatorSettings();
+
+        if ($settings === null || array_key_exists('service_uid', $settings)) {
+            return $user;
+        }
+
+        unset($user['service_uid']);
+
+        return $user;
+    }
+
+    /**
+     * @return array|null null when the account's multi-id could not be read
+     */
+    protected function multidentificatorSettings()
+    {
+        if (!$this->multidentificatorSettingsLoaded) {
+            $account = new Account($this->host, $this->apikey, $this->http);
+
+            $this->multidentificatorSettings       = $account->multidentificatorSettings();
+            $this->multidentificatorSettingsLoaded = true;
+        }
+
+        return $this->multidentificatorSettings;
     }
 
     public function exist($identity)
