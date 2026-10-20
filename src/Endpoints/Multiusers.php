@@ -72,7 +72,8 @@ class Multiusers extends Endpoint
      * settings, and the failure to read them, are memoized for the life of the instance: a failing
      * GET /account is not retried on every PUT, so an outage does not double the requests.
      *
-     * Works on a copy: the caller's array is not modified.
+     * Works on a copy: the caller's array is not modified. Expects an array, as every caller passes;
+     * anything else is returned untouched.
      *
      * @param array $user
      * @return array
