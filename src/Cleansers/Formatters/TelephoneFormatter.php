@@ -39,6 +39,7 @@ class TelephoneFormatter
      * 5. Remove Argentina-specific "15" prefix after area codes
      * 6. Remove country-specific mobile prefixes (Argentina 9, Mexico 1)
      * 7. Keep only digits (and "+" if applicable)
+     * 8. Remove the trunk "0" after the country code (e.g., +593 0 98... → +593 98...)
      *
      * @param string $telephone Raw telephone input
      * @return string Normalized telephone (digits only)
@@ -55,7 +56,7 @@ class TelephoneFormatter
         $telephone = $this->removeDuplicateCountryCode($telephone);
         $telephone = $this->removeArgentina15Prefix($telephone);
 
-        return $this->normalizeWithInternationalPrefix($telephone);
+        return $this->removeTrunkZero($this->normalizeWithInternationalPrefix($telephone));
     }
 
     /**
@@ -203,6 +204,25 @@ class TelephoneFormatter
         }
 
         return $telephone;
+    }
+
+    /**
+     * Removes the trunk "0" that some sources keep after the country code.
+     *
+     * No national number of the countries in COUNTRY_CODE starts with 0, so a 0 right after the
+     * code is always the long-distance prefix:
+     * - "+5930983029147" → "+593983029147" (Ecuador)
+     * - "+5804121234567" → "+584121234567" (Venezuela)
+     *
+     * It only applies when at least 8 digits remain, so a short number that merely starts like a
+     * country code is left as it was.
+     *
+     * @param string $telephone Telephone already normalized (digits and optional "+")
+     * @return string Telephone without the trunk 0
+     */
+    private function removeTrunkZero(string $telephone): string
+    {
+        return preg_replace('/^\+(' . implode('|', self::COUNTRY_CODE) . ')0(\d{8,})$/', '+$1$2', $telephone);
     }
 
     /**
