@@ -6,7 +6,7 @@
  * Los locales cargan emails de relleno bien escritos y con dominio real ("no@mail.com",
  * "nosesabe@hotmail.com") cuando el cliente no da el suyo. sanitize() los devuelve como
  * INVALID_EMAIL: los de negación (GENERIC_USERS) en cualquier dominio y los que también son
- * casillas reales en un dominio propio (GENERIC_FREE_MAIL_USERS: test@, mail@...) solo en correo gratuito, así Multiusers::cleanEmail() guarda <documento>@noemail.com en vez
+ * casillas reales en un dominio propio (GENERIC_FREE_MAIL_USERS: no@, sin@, test@, mail@...) solo en correo gratuito, así Multiusers::cleanEmail() guarda <documento>@noemail.com en vez
  * del email falso. El match es contra el usuario completo: un usuario que solo empieza o termina
  * con uno de esos términos sigue siendo válido.
  *
@@ -93,7 +93,7 @@ foreach (EmailCleanser::GENERIC_FREE_MAIL_USERS as $usuario) {
 echo "\n--- los ejemplos de la carga de Cardon ---\n";
 
 foreach (['no@mail.com', 'nosesabe@hotmail.com', 'noquieredar@gamil.com', 'nosesabe@hotmial.com', 'sinmail@gmail.com',
-             'null@gmail.com', 'a@a.com', 'mail@gmail.com', 'noquiere@yahoo.com', 'test@test.com', 'prueba@prueba.com.ar'] as $email) {
+             'null@gmail.com', 'a@a.com', 'mail@gmail.com', 'noquiere@yahoo.com', 'test@test.com', 'prueba@prueba.com.ar', 'null@null.com', 'sin@hotmail.com'] as $email) {
     $out = $cleanser->sanitize($email);
     check($out === EmailCleanser::INVALID_EMAIL, "$email -> " . var_export($out, true));
 }
@@ -122,6 +122,8 @@ $validos = [
     'ana@hotmail.com', 'nora@hotmail.com', 'noelia@yahoo.com.ar', 'mailen@hotmail.com', 'nadal@outlook.com',
     'testa@hotmail.com', 'sinatra@mail.com', 'ana.no@hotmail.com', 'aaron@hotmail.com', 'juan@notiene.com',
     'pepe@nomail.com', 'demo.ventas@empresa.com.ar', 'mail.juan@empresa.com',
+    // ejemplos de la review: casillas reales en un dominio propio
+    'mail@empresa.com.ar', 'a@estudio.com', 'test@empresa.com', 'sin@sinergia.com.ar', 'no@empresa.com', 'nada@empresa.com',
 ];
 
 foreach ($validos as $email) {

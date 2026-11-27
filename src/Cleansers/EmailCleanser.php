@@ -17,7 +17,7 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
  * 2. Strip a "mailto:" prefix and reject values holding several addresses
  * 3. Clean VTEX platform emails
  * 4. Extract and validate email parts (user and domain)
- * 5. Reject generic filler users (no@, nosesabe@... on any domain; test@, mail@... on free mail)
+ * 5. Reject generic filler users (nosesabe@, notiene@... on any domain; no@, test@, mail@... on free mail)
  * 6. Apply Gmail-specific cleaning for Gmail domains
  * 7. Return sanitized email, false if invalid, or INVALID_EMAIL if unrecoverable
  */
@@ -56,16 +56,16 @@ class EmailCleanser
     // Matched against the whole user, on any domain: they say "no email" and no real inbox is named
     // like that. Partial matches are GenericEmailValidator's job (Gmail only).
     const GENERIC_USERS = [
-        'noemail', 'notiene', 'sin', 'sincorreo', 'nomail', 'notemail', 'nada', 'ninguno', 'xxx',
-        'zzz', 'no', 'null', 'nosesabe', 'nosabe', 'noquiere', 'noquieredar', 'sinemail', 'sinmail',
+        'noemail', 'notiene', 'sincorreo', 'nomail', 'notemail', 'ninguno', 'nosesabe', 'nosabe',
+        'noquiere', 'noquieredar', 'sinemail', 'sinmail',
     ];
 
-    // Filler users that are also real mailboxes on a company's own domain ("mail@empresa.com.ar",
-    // "test@estudio.com"): only filler on a free mail provider (FREE_MAIL_ROOTS) or when the domain
-    // repeats the user ("a@a.com").
+    // Filler users that can also be a real mailbox on a company's own domain ("mail@empresa.com.ar",
+    // "sin@sinergia.com.ar", "nada@" is a name too): only filler on a free mail provider
+    // (FREE_MAIL_ROOTS) or when the domain repeats the user ("a@a.com").
     const GENERIC_FREE_MAIL_USERS = [
         'test', 'example', 'sample', 'dummy', 'fake', 'prueba', 'demo', 'aaa', '000', '111', '123',
-        'mail', 'a',
+        'mail', 'a', 'sin', 'nada', 'no', 'null', 'xxx', 'zzz',
     ];
 
     // Free mail providers, matched against the domain's first label ("hotmail" in "@hotmail.com.ar").
