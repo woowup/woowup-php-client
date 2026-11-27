@@ -6,7 +6,7 @@
  * Los locales cargan emails de relleno bien escritos y con dominio real ("no@mail.com",
  * "nosesabe@hotmail.com") cuando el cliente no da el suyo. sanitize() los devuelve como
  * INVALID_EMAIL: los de negación (GENERIC_USERS) en cualquier dominio y los que también son
- * casillas reales en un dominio propio (GENERIC_FREE_MAIL_USERS: no@, sin@, test@, mail@...) solo en correo gratuito, así Multiusers::cleanEmail() guarda <documento>@noemail.com en vez
+ * casillas reales en un dominio propio (GENERIC_FREE_MAIL_USERS: sin@, test@, mail@...) solo en correo gratuito, así Multiusers::cleanEmail() guarda <documento>@noemail.com en vez
  * del email falso. El match es contra el usuario completo: un usuario que solo empieza o termina
  * con uno de esos términos sigue siendo válido.
  *
@@ -93,7 +93,8 @@ foreach (EmailCleanser::GENERIC_FREE_MAIL_USERS as $usuario) {
 echo "\n--- los ejemplos de la carga de Cardon ---\n";
 
 foreach (['no@mail.com', 'nosesabe@hotmail.com', 'noquieredar@gamil.com', 'nosesabe@hotmial.com', 'sinmail@gmail.com',
-             'null@gmail.com', 'a@a.com', 'mail@gmail.com', 'noquiere@yahoo.com', 'test@test.com', 'prueba@prueba.com.ar', 'null@null.com', 'sin@hotmail.com'] as $email) {
+             'null@gmail.com', 'a@a.com', 'mail@gmail.com', 'noquiere@yahoo.com', 'test@test.com', 'prueba@prueba.com.ar', 'null@null.com', 'sin@hotmail.com',
+             'test@mail.ru', 'test@hotmail.com.ar', 'a@yahoo.co.uk', 'no@empresa.com', 'null@mail.empresa.com.ar', 'xxx@filo.com.ar'] as $email) {
     $out = $cleanser->sanitize($email);
     check($out === EmailCleanser::INVALID_EMAIL, "$email -> " . var_export($out, true));
 }
@@ -123,7 +124,10 @@ $validos = [
     'testa@hotmail.com', 'sinatra@mail.com', 'ana.no@hotmail.com', 'aaron@hotmail.com', 'juan@notiene.com',
     'pepe@nomail.com', 'demo.ventas@empresa.com.ar', 'mail.juan@empresa.com',
     // ejemplos de la review: casillas reales en un dominio propio
-    'mail@empresa.com.ar', 'a@estudio.com', 'test@empresa.com', 'sin@sinergia.com.ar', 'no@empresa.com', 'nada@empresa.com',
+    'mail@empresa.com.ar', 'a@estudio.com', 'test@empresa.com', 'sin@sinergia.com.ar', 'nada@empresa.com',
+    // subdominios de empresa que empiezan como un proveedor gratuito
+    'test@mail.empresa.com.ar', 'mail@mail.empresa.com.ar', 'demo@live.empresa.com', 'a@outlook.empresa.com',
+    'sin@mail.universidad.edu.ar',
 ];
 
 foreach ($validos as $email) {
