@@ -17,8 +17,9 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
  * 2. Strip a "mailto:" prefix and reject values holding several addresses
  * 3. Clean VTEX platform emails
  * 4. Extract and validate email parts (user and domain)
- * 5. Apply Gmail-specific cleaning for Gmail domains
- * 6. Return sanitized email or false if invalid
+ * 5. Reject generic filler users (no@, nosesabe@... on any domain; test@, mail@, sin@... on free mail)
+ * 6. Apply Gmail-specific cleaning for Gmail domains
+ * 7. Return sanitized email, false if invalid, or INVALID_EMAIL if unrecoverable
  */
 class EmailCleanser
 {
@@ -50,6 +51,33 @@ class EmailCleanser
 
     // Marketplace-generated proxy addresses, not a real customer inbox.
     const INVALID_DOMAINS = ['@mail.mercadolibre.com'];
+
+    // Filler users stores type when the customer gives no email ("no@mail.com", "nosesabe@hotmail.com").
+    // Matched against the whole user, on any domain: they say "no email" and no real inbox is named
+    // like that. Partial matches are GenericEmailValidator's job (Gmail only).
+    const GENERIC_USERS = [
+        'noemail', 'notiene', 'sincorreo', 'nomail', 'notemail', 'ninguno', 'nosesabe', 'nosabe',
+        'noquiere', 'noquieredar', 'sinemail', 'sinmail', 'no', 'null', 'xxx', 'zzz',
+    ];
+
+    // Filler users that can also be a real mailbox on a company's own domain ("mail@empresa.com.ar",
+    // "sin@sinergia.com.ar", "nada@" is a name too): only filler on a free mail provider
+    // (FREE_MAIL_ROOTS) or when the domain repeats the user ("a@a.com").
+    const GENERIC_FREE_MAIL_USERS = [
+        'test', 'example', 'sample', 'dummy', 'fake', 'prueba', 'demo', 'aaa', '000', '111', '123',
+        'mail', 'a', 'sin', 'nada',
+    ];
+
+    // Free mail providers: the domain's first label ("hotmail" in "@hotmail.com.ar"), followed only by a
+    // TLD (FREE_MAIL_TLD_PATTERN), so a company subdomain like "@mail.empresa.com.ar" doesn't count.
+    // Gmail typos need no entry: extractEmailParts() already turned them into "@gmail.com".
+    const FREE_MAIL_ROOTS = [
+        'gmail', 'hotmail', 'outlook', 'live', 'msn', 'yahoo', 'icloud', 'aol', 'protonmail', 'proton',
+        'zoho', 'mail', 'hotmial', 'hotmal', 'hotmai', 'homail', 'hotamil', 'hotmil', 'yahooo', 'outlok',
+    ];
+
+    // What may follow a free provider's label: "com", "ru", "com.ar", "co.uk".
+    const FREE_MAIL_TLD_PATTERN = '/^(com|net|org|[a-z]{2})(\.[a-z]{2,3})?$/';
 
     const MAILTO_PREFIX = 'mailto:';
 
@@ -122,6 +150,13 @@ class EmailCleanser
 
         if (!$this->hasValidParts()) {
             return false;
+        }
+
+        // INVALID_EMAIL, not false: on false the raw filler address would still be saved and sent
+        // with the purchase; INVALID_EMAIL maps it to <document>@noemail.com (see hasSeveralAddresses()).
+        if ($this->isGenericUser()) {
+            $this->resetEmailParts();
+            return self::INVALID_EMAIL;
         }
 
         if ($this->isInvalidDomain()) {
@@ -279,6 +314,38 @@ class EmailCleanser
     private function hasSeveralAddresses(string $email): bool
     {
         return preg_match_all(self::ADDRESS_PATTERN, $email) >= 2;
+    }
+
+    /**
+     * The "@noemail.com" placeholders (INVALID_EMAIL and <document>@noemail.com) are left alone:
+     * INVALID_EMAIL has to keep coming back as itself so it is mapped to <document>@noemail.com.
+     */
+    private function isGenericUser(): bool
+    {
+        $domain = mb_strtolower($this->emailDomain);
+
+        if ($domain === '@noemail.com') {
+            return false;
+        }
+
+        $user = mb_strtolower(trim($this->emailUser));
+
+        if (in_array($user, self::GENERIC_USERS, true)) {
+            return true;
+        }
+
+        if (!in_array($user, self::GENERIC_FREE_MAIL_USERS, true)) {
+            return false;
+        }
+
+        [$root, $tld] = array_pad(explode('.', ltrim($domain, '@'), 2), 2, '');
+
+        if (!preg_match(self::FREE_MAIL_TLD_PATTERN, $tld)) {
+            return false;
+        }
+
+        // "a@a.com", "test@test.com": the domain repeats the filler user, so it is no company's mailbox
+        return $root === $user || in_array($root, self::FREE_MAIL_ROOTS, true);
     }
 
     private function isInvalidDomain(): bool
