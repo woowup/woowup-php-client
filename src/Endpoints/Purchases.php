@@ -5,6 +5,8 @@ namespace WoowUp\Endpoints;
 */
 class Purchases extends Endpoint
 {
+    const INVALID_EMAIL = 'noemail@noemail.com';
+
 	public function __construct($host, $apikey, \GuzzleHttp\ClientInterface $http = null)
 	{
 		parent::__construct($host, $apikey, $http);
@@ -142,9 +144,24 @@ class Purchases extends Endpoint
 
         $sanitizedEmail = $this->cleanser->email->sanitize($originalEmail);
 
-        if ($sanitizedEmail !== false) {
-            $data['email'] = $sanitizedEmail;
+        if ($sanitizedEmail === false) {
+            return $data;
         }
+
+        // INVALID_EMAIL is the placeholder every customer shares: mapped to <document>@noemail.com,
+        // as Users and Multiusers do, so the purchase doesn't land on a customer it isn't from.
+        if ($sanitizedEmail === self::INVALID_EMAIL) {
+            $localPart =
+                ($data['document']    ?? null) ?:
+                    ($data['service_uid'] ?? null) ?:
+                        ($data['telephone']   ?? null);
+
+            $data['email'] = $localPart ? $localPart . '@noemail.com' : $sanitizedEmail;
+
+            return $data;
+        }
+
+        $data['email'] = $sanitizedEmail;
 
         return $data;
     }

@@ -17,7 +17,7 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
  * 2. Strip a "mailto:" prefix and reject values holding several addresses
  * 3. Clean VTEX platform emails
  * 4. Extract and validate email parts (user and domain)
- * 5. Reject generic filler users (no@, test@, nosesabe@...) on any domain
+ * 5. Reject generic filler users (no@, nosesabe@... on any domain; test@, mail@... on free mail)
  * 6. Apply Gmail-specific cleaning for Gmail domains
  * 7. Return sanitized email, false if invalid, or INVALID_EMAIL if unrecoverable
  */
@@ -53,13 +53,26 @@ class EmailCleanser
     const INVALID_DOMAINS = ['@mail.mercadolibre.com'];
 
     // Filler users stores type when the customer gives no email ("no@mail.com", "nosesabe@hotmail.com").
-    // Matched against the whole user, on any domain: a real address with one of these users does not
-    // exist, so there is no false positive. Partial matches are GenericEmailValidator's job (Gmail only).
+    // Matched against the whole user, on any domain: they say "no email" and no real inbox is named
+    // like that. Partial matches are GenericEmailValidator's job (Gmail only).
     const GENERIC_USERS = [
-        'noemail', 'notiene', 'sin', 'sincorreo', 'test', 'example', 'sample', 'dummy', 'fake',
-        'prueba', 'demo', 'nomail', 'notemail', 'nada', 'ninguno', 'xxx', 'zzz', 'aaa', '000',
-        '111', '123', 'no', 'null', 'nosesabe', 'nosabe', 'noquiere', 'noquieredar', 'sinemail',
-        'sinmail', 'mail', 'a',
+        'noemail', 'notiene', 'sin', 'sincorreo', 'nomail', 'notemail', 'nada', 'ninguno', 'xxx',
+        'zzz', 'no', 'null', 'nosesabe', 'nosabe', 'noquiere', 'noquieredar', 'sinemail', 'sinmail',
+    ];
+
+    // Filler users that are also real mailboxes on a company's own domain ("mail@empresa.com.ar",
+    // "test@estudio.com"): only filler on a free mail provider (FREE_MAIL_ROOTS) or when the domain
+    // repeats the user ("a@a.com").
+    const GENERIC_FREE_MAIL_USERS = [
+        'test', 'example', 'sample', 'dummy', 'fake', 'prueba', 'demo', 'aaa', '000', '111', '123',
+        'mail', 'a',
+    ];
+
+    // Free mail providers, matched against the domain's first label ("hotmail" in "@hotmail.com.ar").
+    // Gmail typos need no entry: extractEmailParts() already turned them into "@gmail.com".
+    const FREE_MAIL_ROOTS = [
+        'gmail', 'hotmail', 'outlook', 'live', 'msn', 'yahoo', 'icloud', 'aol', 'protonmail', 'proton',
+        'zoho', 'mail', 'hotmial', 'hotmal', 'hotmai', 'homail', 'hotamil', 'hotmil', 'yahooo', 'outlok',
     ];
 
     const MAILTO_PREFIX = 'mailto:';
@@ -305,11 +318,26 @@ class EmailCleanser
      */
     private function isGenericUser(): bool
     {
-        if (mb_strtolower($this->emailDomain) === '@noemail.com') {
+        $domain = mb_strtolower($this->emailDomain);
+
+        if ($domain === '@noemail.com') {
             return false;
         }
 
-        return in_array(mb_strtolower(trim($this->emailUser)), self::GENERIC_USERS, true);
+        $user = mb_strtolower(trim($this->emailUser));
+
+        if (in_array($user, self::GENERIC_USERS, true)) {
+            return true;
+        }
+
+        if (!in_array($user, self::GENERIC_FREE_MAIL_USERS, true)) {
+            return false;
+        }
+
+        // "a@a.com", "test@test.com": the domain repeats the filler user, so it is no company's mailbox
+        $root = explode('.', ltrim($domain, '@'), 2)[0];
+
+        return $root === $user || in_array($root, self::FREE_MAIL_ROOTS, true);
     }
 
     private function isInvalidDomain(): bool

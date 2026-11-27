@@ -5,7 +5,8 @@
  *
  * Los locales cargan emails de relleno bien escritos y con dominio real ("no@mail.com",
  * "nosesabe@hotmail.com") cuando el cliente no da el suyo. sanitize() los devuelve como
- * INVALID_EMAIL en cualquier dominio, así Multiusers::cleanEmail() guarda <documento>@noemail.com en vez
+ * INVALID_EMAIL: los de negación (GENERIC_USERS) en cualquier dominio y los que también son
+ * casillas reales en un dominio propio (GENERIC_FREE_MAIL_USERS: test@, mail@...) solo en correo gratuito, así Multiusers::cleanEmail() guarda <documento>@noemail.com en vez
  * del email falso. El match es contra el usuario completo: un usuario que solo empieza o termina
  * con uno de esos términos sigue siendo válido.
  *
@@ -47,25 +48,52 @@ echo " EmailCleanser: usuarios de relleno\n";
 echo "======================================================================\n";
 
 // ------------------------------------------------------------------ positivos
-echo "\n--- cada usuario de relleno es INVALID_EMAIL en cualquier dominio ---\n";
+echo "\n--- cada usuario de negación es INVALID_EMAIL en cualquier dominio ---\n";
 
-$dominios = ['gmail.com', 'hotmail.com', 'mail.com', 'yahoo.com.ar', 'outlook.com', 'gamil.com', 'hotmial.com'];
+$gratuitos = ['gmail.com', 'hotmail.com', 'mail.com', 'yahoo.com.ar', 'outlook.com', 'gamil.com', 'hotmial.com', 'live.com.ar'];
+$propios   = ['empresa.com.ar', 'estudio.com', 'agencia.com', 'hotelplaza.com', 'macro.com.ar'];
 
 foreach (EmailCleanser::GENERIC_USERS as $usuario) {
     $fallidos = [];
-    foreach ($dominios as $dominio) {
+    foreach (array_merge($gratuitos, $propios) as $dominio) {
         $out = $cleanser->sanitize("$usuario@$dominio");
         if ($out !== EmailCleanser::INVALID_EMAIL) {
             $fallidos[] = "$dominio -> " . var_export($out, true);
         }
     }
-    check($fallidos === [], "$usuario@ en " . count($dominios) . ' dominios' . ($fallidos ? ': ' . implode(', ', $fallidos) : ''));
+    check($fallidos === [], "$usuario@ en " . (count($gratuitos) + count($propios)) . ' dominios' . ($fallidos ? ': ' . implode(', ', $fallidos) : ''));
+}
+
+echo "\n--- test@, mail@... son INVALID_EMAIL en correo gratuito ---\n";
+
+foreach (EmailCleanser::GENERIC_FREE_MAIL_USERS as $usuario) {
+    $fallidos = [];
+    foreach ($gratuitos as $dominio) {
+        $out = $cleanser->sanitize("$usuario@$dominio");
+        if ($out !== EmailCleanser::INVALID_EMAIL) {
+            $fallidos[] = "$dominio -> " . var_export($out, true);
+        }
+    }
+    check($fallidos === [], "$usuario@ en " . count($gratuitos) . ' dominios gratuitos' . ($fallidos ? ': ' . implode(', ', $fallidos) : ''));
+}
+
+echo "\n--- test@, mail@... siguen válidos en un dominio propio ---\n";
+
+foreach (EmailCleanser::GENERIC_FREE_MAIL_USERS as $usuario) {
+    $fallidos = [];
+    foreach ($propios as $dominio) {
+        $out = $cleanser->sanitize("$usuario@$dominio");
+        if ($out === false || $out === EmailCleanser::INVALID_EMAIL) {
+            $fallidos[] = "$dominio -> " . var_export($out, true);
+        }
+    }
+    check($fallidos === [], "$usuario@ en " . count($propios) . ' dominios propios' . ($fallidos ? ': ' . implode(', ', $fallidos) : ''));
 }
 
 echo "\n--- los ejemplos de la carga de Cardon ---\n";
 
 foreach (['no@mail.com', 'nosesabe@hotmail.com', 'noquieredar@gamil.com', 'nosesabe@hotmial.com', 'sinmail@gmail.com',
-             'null@gmail.com', 'a@a.com', 'mail@gmail.com', 'noquiere@yahoo.com'] as $email) {
+             'null@gmail.com', 'a@a.com', 'mail@gmail.com', 'noquiere@yahoo.com', 'test@test.com', 'prueba@prueba.com.ar'] as $email) {
     $out = $cleanser->sanitize($email);
     check($out === EmailCleanser::INVALID_EMAIL, "$email -> " . var_export($out, true));
 }
