@@ -17,8 +17,9 @@ use WoowUp\Cleansers\Validators\SequenceValidator;
  * 2. Strip a "mailto:" prefix and reject values holding several addresses
  * 3. Clean VTEX platform emails
  * 4. Extract and validate email parts (user and domain)
- * 5. Apply Gmail-specific cleaning for Gmail domains
- * 6. Return sanitized email or false if invalid
+ * 5. Reject generic filler users (no@, test@, nosesabe@...) on any domain
+ * 6. Apply Gmail-specific cleaning for Gmail domains
+ * 7. Return sanitized email, false if invalid, or INVALID_EMAIL if unrecoverable
  */
 class EmailCleanser
 {
@@ -50,6 +51,16 @@ class EmailCleanser
 
     // Marketplace-generated proxy addresses, not a real customer inbox.
     const INVALID_DOMAINS = ['@mail.mercadolibre.com'];
+
+    // Filler users stores type when the customer gives no email ("no@mail.com", "nosesabe@hotmail.com").
+    // Matched against the whole user, on any domain: a real address with one of these users does not
+    // exist, so there is no false positive. Partial matches are GenericEmailValidator's job (Gmail only).
+    const GENERIC_USERS = [
+        'noemail', 'notiene', 'sin', 'sincorreo', 'test', 'example', 'sample', 'dummy', 'fake',
+        'prueba', 'demo', 'nomail', 'notemail', 'nada', 'ninguno', 'xxx', 'zzz', 'aaa', '000',
+        '111', '123', 'no', 'null', 'nosesabe', 'nosabe', 'noquiere', 'noquieredar', 'sinemail',
+        'sinmail', 'mail', 'a',
+    ];
 
     const MAILTO_PREFIX = 'mailto:';
 
@@ -122,6 +133,13 @@ class EmailCleanser
 
         if (!$this->hasValidParts()) {
             return false;
+        }
+
+        // INVALID_EMAIL, not false: on false the raw filler address would still be saved and sent
+        // with the purchase; INVALID_EMAIL maps it to <document>@noemail.com (see hasSeveralAddresses()).
+        if ($this->isGenericUser()) {
+            $this->resetEmailParts();
+            return self::INVALID_EMAIL;
         }
 
         if ($this->isInvalidDomain()) {
@@ -279,6 +297,19 @@ class EmailCleanser
     private function hasSeveralAddresses(string $email): bool
     {
         return preg_match_all(self::ADDRESS_PATTERN, $email) >= 2;
+    }
+
+    /**
+     * The "@noemail.com" placeholders (INVALID_EMAIL and <document>@noemail.com) are left alone:
+     * INVALID_EMAIL has to keep coming back as itself so it is mapped to <document>@noemail.com.
+     */
+    private function isGenericUser(): bool
+    {
+        if (mb_strtolower($this->emailDomain) === '@noemail.com') {
+            return false;
+        }
+
+        return in_array(mb_strtolower(trim($this->emailUser)), self::GENERIC_USERS, true);
     }
 
     private function isInvalidDomain(): bool
